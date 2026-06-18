@@ -18,6 +18,7 @@ type DecorativeLeafProps = {
   flipX?: boolean;
   flipY?: boolean;
   opacity?: number;
+  zIndex?: number;
   style?: StyleProp<ImageStyle>;
 };
 
@@ -32,6 +33,7 @@ export default function DecorativeLeaf({
   flipX = false,
   flipY = false,
   opacity = 0.25,
+  zIndex = 0,
   style,
 }: DecorativeLeafProps) {
   return (

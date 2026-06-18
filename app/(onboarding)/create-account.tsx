@@ -9,6 +9,7 @@ import AppButton from "../../src/components/ui/AppButton"
 import SocialButton from "../../src/components/ui/SocialButton"
 import Logo from "../../src/components/ui/Logo"
 import Card from "../../src/components/ui/Card"
+import BackButton from "../../src/components/ui/BackButton";
 import { theme } from "../../src/constants/theme";
 
 import { router } from "expo-router";
@@ -20,11 +21,7 @@ export default function LoginScreen() {
     const [rememberMe, setRememberMe] = useState(false);
 
     function handleLogin() {
-        Alert.alert("Login unavailable", "This will be connected later.");
-    }
-
-    function handleCreateAccount() {
-        router.push(routes.auth.createAccount)
+        router.push(routes.auth.login)
     }
 
     function handleGoogleLogin() {
@@ -32,13 +29,18 @@ export default function LoginScreen() {
     }
     return (
         <Screen>
-            <Logo hasTagline={true}/>
+
+            <View style={styles.logoHeader}>
+                <BackButton style={styles.backButton} />
+
+                <Logo hasTagline={true} />
+            </View>
 
             <View style={styles.hero}>
                 <View style={styles.heroText}>
-                    <Text style={styles.title}>Welcome Back</Text>
+                    <Text style={styles.title}>Create your Account</Text>
                     <Text style={styles.subtitle}>
-                        Log in to view your matches and continue finding the right pet for your lifestyle.
+                        Create your PetPath account to discover personalised pet matches and help more animals find loving homes.
                     </Text>
                 </View>
 
@@ -49,6 +51,8 @@ export default function LoginScreen() {
                     </Text>
                 </View>
             </View>
+
+            <Spacer height={10} />
 
             <Card>
                 <AppTextInput
@@ -90,9 +94,9 @@ export default function LoginScreen() {
                 <SocialButton onPress={handleGoogleLogin} />
 
                 <View style={styles.createRow}>
-                    <Text style={styles.smallText}>Don't have an account?</Text>
+                    <Text style={styles.smallText}>Already have an account?</Text>
                     <TouchableOpacity>
-                        <Text style={styles.linkText} onPress={handleCreateAccount}>Create account</Text>
+                        <Text style={styles.linkText} onPress={handleLogin}>Log in</Text>
                     </TouchableOpacity>
                 </View>
             </Card>
@@ -104,7 +108,7 @@ export default function LoginScreen() {
                     left={-25}
                     rotate={90}
                     opacity={1}
-                    zIndex={-1}
+                    
                 />
 
                 <DecorativeLeaf
@@ -122,11 +126,17 @@ export default function LoginScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    header: {
+const styles = StyleSheet.create({   
+    logoHeader: {
+        position: "relative",
         alignItems: "center",
-        paddingTop: theme.spacing.md,
-        marginBottom: theme.spacing.lg,
+    },
+
+    backButton: {
+        position: "absolute",
+        left: theme.spacing.md,
+        top: 8,
+        zIndex: 10,
     },
     page: {
         flex: 1,
