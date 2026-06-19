@@ -69,7 +69,7 @@ export default function CreateAccountScreen() {
 
                         <View style={styles.codePromptSection}>
                             <Text style={styles.codePromptTitle}>
-                                Enter the 6-digit code
+                                Enter the 6-digit code:
                             </Text>
                         </View>
 
@@ -159,7 +159,6 @@ const styles = StyleSheet.create({
     codePromptSection: {
         width: "100%",
         alignItems: "flex-start",
-        marginBottom: theme.spacing.sm,
     },
     codePromptTitle: {
         fontSize: 18,

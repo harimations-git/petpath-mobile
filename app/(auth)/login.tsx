@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginTop: -4,
+        marginTop: 10,
     },
     rememberRow: {
         flexDirection: "row",

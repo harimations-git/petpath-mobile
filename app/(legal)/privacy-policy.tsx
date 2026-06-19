@@ -30,7 +30,7 @@ export default function CreateAccountScreen() {
                 <View style={styles.heroText}>
                     <Text style={styles.title}>Privacy Policy</Text>
                     <Text style={styles.subtitle}>
-                        These terms explain how PetPath should be used and how the adoption process works through official rescue organisations.
+                        Learn how PetPath uses your information.
                     </Text>
                 </View>
             </View>
@@ -69,16 +69,16 @@ export default function CreateAccountScreen() {
 
 
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>• Responsible use</Text>
+                                <Text style={styles.sectionTitle}>• Information we collect</Text>
                                 <Text style={styles.bodyText}>
-                                    Users should provide accurate information in their lifestyle profile so that PetPath can recommend pets responsibly. Inaccurate answers may affect the suitability of the matches shown.
+                                    PetPath may collect account details, lifestyle questionnaire answers, approximate location, saved pets and report information.
                                 </Text>
                             </View>
 
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>• Adoption process</Text>
+                                <Text style={styles.sectionTitle}>• How your data is used</Text>
                                 <Text style={styles.bodyText}>
-                                    PetPath does not directly manage adoptions. Any enquiries, applications, home checks or adoption decisions are handled by the official shelter, rescue centre or charity that created the listing.
+                                    Your information is used to calculate pet matches, personalise recommendations, save pets and support safety/moderation features.
                                 </Text>
                             </View>
 
@@ -90,30 +90,30 @@ export default function CreateAccountScreen() {
                             </View>
 
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>• Suitability matching</Text>
+                                <Text style={styles.sectionTitle}>• Location data</Text>
                                 <Text style={styles.bodyText}>
-                                    Match scores are provided as guidance only. They are based on the user’s lifestyle answers and the animal’s matching profile, but they do not guarantee that an adoption application will be accepted.
+                                    Approximate location is used only to show pets within a relevant search distance.
                                 </Text>
                             </View>
 
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>• Saved pets and updates</Text>
+                                <Text style={styles.sectionTitle}>• Email updates</Text>
                                 <Text style={styles.bodyText}>
-                                    Users may save pets they are interested in and choose to receive updates if a saved pet becomes reserved, rehomed or unavailable.
+                                    Users can choose to receive email updates when saved pets become reserved, rehomed or unavailable. User's cant opt out of this at any time from the settings menu.
                                 </Text>
                             </View>
 
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>• Safety and reporting</Text>
+                                <Text style={styles.sectionTitle}>• Data sharing</Text>
                                 <Text style={styles.bodyText}>
-                                    Users can report inaccurate, outdated or concerning listings so they can be reviewed by PetPath administrators.
+                                    PetPath does not sell user data. Information is only used to provide the app’s core features and support moderation where necessary.
                                 </Text>
                             </View>
 
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>• No marketplace activity</Text>
+                                <Text style={styles.sectionTitle}>• Account control</Text>
                                 <Text style={styles.bodyText}>
-                                    PetPath is not a marketplace and does not handle payments, deposits, private sales or ownership transfers. The platform is intended to support responsible adoption through verified organisations.
+                                    Users can update their profile and notification preferences from settings.
                                 </Text>
                             </View>
                         </ScrollView>
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
         lineHeight: 36,
         fontWeight: "900",
         color: theme.colors.primaryDark,
-        marginBottom: theme.spacing.sm,
+
         textAlign: "center",
     },
 
@@ -177,7 +177,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         lineHeight: 20,
         color: theme.colors.text,
-        marginBottom: theme.spacing.sm,
         textAlign: "center",
     },
 
