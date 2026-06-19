@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         justifyContent: "space-between",
         paddingHorizontal: theme.spacing.md,
-        marginTop: theme.spacing.lg
+        marginTop: theme.spacing.md
     },
     iconSpace: {
         width: 40,

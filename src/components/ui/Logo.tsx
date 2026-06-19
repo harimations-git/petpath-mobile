@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     header: {
         alignItems: "center",
         paddingTop: theme.spacing.md,
-        marginBottom: theme.spacing.lg,
+        marginBottom: theme.spacing.sm,
     },
     logoRow: {
         flexDirection: "row",

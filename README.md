@@ -4,5 +4,5 @@ PetPath: an adoption-first pet matching platform for verified rescue centres and
 # to run
 npx expo start
 
-# to clear cache
+# to run & clear cache
 npx expo start -c
