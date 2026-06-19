@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Screen from "../../src/components/layout/Screen"
-import Spacer from "../../src/components/layout/Spacer"
 import AppTextInput from "../../src/components/ui/AppTextInput"
 import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
 import AppButton from "../../src/components/ui/AppButton"
@@ -29,6 +28,10 @@ export default function LoginScreen() {
 
     function handleGoogleLogin() {
         Alert.alert("Google login unavailable", "This will be connected later.");
+    }
+
+    function handleForgetPassword() {
+        Alert.alert("Forget Password unavailable", "This will be connected later.");
     }
     return (
         <Screen>
@@ -81,7 +84,7 @@ export default function LoginScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity>
-                        <Text style={styles.forgotText}>Forgot password?</Text>
+                        <Text style={styles.forgotText} onPress={handleForgetPassword}>Forgot password?</Text>
                     </TouchableOpacity>
                 </View>
 
