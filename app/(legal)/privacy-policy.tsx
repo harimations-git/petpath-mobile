@@ -9,7 +9,7 @@ import BackButton from "../../src/components/ui/BackButton";
 import { theme } from "../../src/constants/theme";
 import Spacer from "../../src/components/layout/Spacer";
 
-export default function CreateAccountScreen() {
+export default function PrivacyPolicyScreen() {
 
     return (
         <Screen

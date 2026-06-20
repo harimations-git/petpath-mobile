@@ -15,7 +15,7 @@ import AuthProgressStepper from "../../src/components/ui/auth/AuthProgressSteppe
 import VerificationCodeInput from "../../src/components/ui/auth/VerificationCodeInput";
 import { theme } from "../../src/constants/theme";
 
-export default function CreateAccountScreen() {
+export default function VerifyEmailScreen() {
     const [verificationCode, setVerificationCode] = useState("");
 
     function handleEmailVerification() {
