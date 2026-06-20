@@ -8,6 +8,7 @@ export const theme = {
     border: "#DDE5DA",
     card: "#FFFFFF",
     paleGreen: "#EAF3DF",
+    error: "#D96A6A"
   },
 
   spacing: {
