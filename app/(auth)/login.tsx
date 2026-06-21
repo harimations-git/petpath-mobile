@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Screen from "../../src/components/layout/Screen"
 import AppTextInput from "../../src/components/ui/AppTextInput"
@@ -10,16 +10,73 @@ import Logo from "../../src/components/ui/Logo"
 import Card from "../../src/components/ui/Card"
 import { theme } from "../../src/constants/theme";
 
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { routes } from "../../src/constants/routes";
+import NoticeMessage from "../../src/components/ui/NoticeMessage";
+import Spacer from "../../src/components/layout/Spacer";
+
+import { loginUser } from "../../src/services/auth/authService";
 
 export default function LoginScreen() {
+    const { accountCreated } = useLocalSearchParams<{
+        accountCreated?: string;
+    }>();
+
+    const [showAccountCreatedMessage, setShowAccountCreatedMessage] = useState(
+        accountCreated === "true"
+    );
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
 
-    function handleLogin() {
-        Alert.alert("Login unavailable", "This will be connected later.");
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [loginError, setLoginError] = useState("");
+
+    async function handleLogin() {
+        if (loginLoading) return;
+
+        if (!email.trim() || !password.trim()) {
+            setLoginError("Please enter your email address and password.");
+            return;
+        }
+
+        try {
+            setLoginLoading(true);
+            setLoginError("");
+
+            const result = await loginUser(email, password);
+
+            if (result.isSignedIn) {
+                Alert.alert("Success");
+                // router.replace(routes.home);
+                return;
+            }
+
+            setLoginError("Your account needs another step before you can log in.");
+            console.log("Next sign-in step:", result.nextStep);
+        } catch (error: any) {
+            console.log("Login error name:", error?.name);
+            console.log("Login error message:", error?.message);
+            console.log("Full login error:", JSON.stringify(error, null, 2));
+
+            if (
+                error?.name === "NotAuthorizedException" ||
+                error?.name === "UserNotFoundException"
+            ) {
+                setLoginError("Invalid email or password.");
+                return;
+            }
+
+            if (error?.name === "UserNotConfirmedException") {
+                setLoginError("Please verify your email before logging in.");
+                return;
+            }
+
+            setLoginError(error?.message || "Login failed. Please try again.");
+        } finally {
+            setLoginLoading(false);
+        }
     }
 
     function handleCreateAccount() {
@@ -35,7 +92,7 @@ export default function LoginScreen() {
     }
     return (
         <Screen>
-            <Logo hasTagline={true}/>
+            <Logo hasTagline={true} />
 
             <View style={styles.hero}>
                 <View style={styles.heroText}>
@@ -53,7 +110,19 @@ export default function LoginScreen() {
                 </View>
             </View>
 
+
+
             <Card>
+                {showAccountCreatedMessage && (
+                    <>
+                        <NoticeMessage
+                            iconName="key"
+                            message="Account created successfully! You’re all set — log in to continue your PetPath journey."
+                        />
+                        <Spacer height={20} />
+                    </>
+                )}
+
                 <AppTextInput
                     label="Email address"
                     placeholder="Enter your email address"
@@ -61,7 +130,11 @@ export default function LoginScreen() {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={(text) => {
+                        setEmail(text);
+                        setLoginError("");
+                        setShowAccountCreatedMessage(false);
+                    }}
                 />
                 <AppTextInput
                     label="Password"
@@ -69,8 +142,19 @@ export default function LoginScreen() {
                     iconName="lock-closed"
                     isPassword
                     value={password}
-                    onChangeText={setPassword}
+                    onChangeText={(text) => {
+                        setPassword(text);
+                        setLoginError("");
+                        setShowAccountCreatedMessage(false);
+                    }}
                 />
+
+                {loginError ? (
+                    <>
+                        <Text style={styles.loginError}>{loginError}</Text>
+                        <Spacer height={10} />
+                    </>
+                ) : null}
 
                 <View style={styles.optionsRow}>
                     <TouchableOpacity style={styles.rememberRow}
@@ -232,5 +316,11 @@ const styles = StyleSheet.create({
         color: theme.colors.primary,
         fontWeight: "700",
         textDecorationLine: "underline",
+    },
+    loginError: {
+        color: theme.colors.error,
+        fontSize: 12,
+        fontWeight: "700",
+        textAlign: "center",
     },
 });
