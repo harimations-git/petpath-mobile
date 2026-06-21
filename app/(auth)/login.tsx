@@ -8,16 +8,23 @@ import AppButton from "../../src/components/ui/AppButton"
 import SocialButton from "../../src/components/ui/SocialButton"
 import Logo from "../../src/components/ui/Logo"
 import Card from "../../src/components/ui/Card"
+import NoticeMessage from "../../src/components/ui/NoticeMessage";
+import Spacer from "../../src/components/layout/Spacer";
 import { theme } from "../../src/constants/theme";
 
 import { router, useLocalSearchParams } from "expo-router";
 import { routes } from "../../src/constants/routes";
-import NoticeMessage from "../../src/components/ui/NoticeMessage";
-import Spacer from "../../src/components/layout/Spacer";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loginUser } from "../../src/services/auth/authService";
 
 export default function LoginScreen() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [rememberMe, setRememberMe] = useState(false);
+
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [loginError, setLoginError] = useState("");
+
     const { accountCreated } = useLocalSearchParams<{
         accountCreated?: string;
     }>();
@@ -25,13 +32,6 @@ export default function LoginScreen() {
     const [showAccountCreatedMessage, setShowAccountCreatedMessage] = useState(
         accountCreated === "true"
     );
-
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [rememberMe, setRememberMe] = useState(false);
-
-    const [loginLoading, setLoginLoading] = useState(false);
-    const [loginError, setLoginError] = useState("");
 
     async function handleLogin() {
         if (loginLoading) return;
@@ -41,24 +41,62 @@ export default function LoginScreen() {
             return;
         }
 
+        const normalisedEmail = email.trim().toLowerCase();
+
         try {
             setLoginLoading(true);
             setLoginError("");
 
-            const result = await loginUser(email, password);
+            const pendingEmail = await AsyncStorage.getItem(
+                "pendingVerificationEmail"
+            );
+
+            if (pendingEmail === normalisedEmail) {
+                router.replace({
+                    pathname: routes.auth.verifyEmail,
+                    params: { email: normalisedEmail },
+                });
+                return;
+            }
+
+            const result = await loginUser(normalisedEmail, password);
+
+            console.log("Login result:", JSON.stringify(result, null, 2));
 
             if (result.isSignedIn) {
                 Alert.alert("Success");
-                // router.replace(routes.home);
+                return;
+            }
+
+            if (result.nextStep?.signInStep === "CONFIRM_SIGN_UP") {
+                await AsyncStorage.setItem(
+                    "pendingVerificationEmail",
+                    normalisedEmail
+                );
+
+                router.replace({
+                    pathname: routes.auth.verifyEmail,
+                    params: { email: normalisedEmail },
+                });
                 return;
             }
 
             setLoginError("Your account needs another step before you can log in.");
-            console.log("Next sign-in step:", result.nextStep);
         } catch (error: any) {
             console.log("Login error name:", error?.name);
-            console.log("Login error message:", error?.message);
-            console.log("Full login error:", JSON.stringify(error, null, 2));
+
+            if (error?.name === "UserNotConfirmedException") {
+                await AsyncStorage.setItem(
+                    "pendingVerificationEmail",
+                    normalisedEmail
+                );
+
+                router.replace({
+                    pathname: routes.auth.verifyEmail,
+                    params: { email: normalisedEmail },
+                });
+                return;
+            }
 
             if (
                 error?.name === "NotAuthorizedException" ||
@@ -68,18 +106,13 @@ export default function LoginScreen() {
                 return;
             }
 
-            if (error?.name === "UserNotConfirmedException") {
-                setLoginError("Please verify your email before logging in.");
-                return;
-            }
-
             setLoginError(error?.message || "Login failed. Please try again.");
         } finally {
             setLoginLoading(false);
         }
     }
 
-    function handleCreateAccount() {
+    function handleCreateNewAccount() {
         router.push(routes.auth.createAccount)
     }
 
@@ -109,8 +142,6 @@ export default function LoginScreen() {
                     </Text>
                 </View>
             </View>
-
-
 
             <Card>
                 {showAccountCreatedMessage && (
@@ -179,7 +210,7 @@ export default function LoginScreen() {
                 <View style={styles.createRow}>
                     <Text style={styles.smallText}>Don't have an account?</Text>
                     <TouchableOpacity>
-                        <Text style={styles.linkText} onPress={handleCreateAccount}>Create account</Text>
+                        <Text style={styles.linkText} onPress={handleCreateNewAccount}>Create account</Text>
                     </TouchableOpacity>
                 </View>
             </Card>

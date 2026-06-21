@@ -3,10 +3,11 @@ import { StyleSheet, Text, TouchableOpacity, View, Image, Alert } from "react-na
 
 
 import { routes } from "../../src/constants/routes";
-import { router } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { verifyEmail, resendVerificationCode } from "../../src/services/auth/authService";
 
 import Screen from "../../src/components/layout/Screen"
-import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
 import AppButton from "../../src/components/ui/AppButton"
 import Logo from "../../src/components/ui/Logo"
 import Card from "../../src/components/ui/Card"
@@ -17,13 +18,33 @@ import { theme } from "../../src/constants/theme";
 
 export default function VerifyEmailScreen() {
     const [verificationCode, setVerificationCode] = useState("");
+    const { email } = useLocalSearchParams<{ email: string }>();
+    const [formError, setFormError] = useState("");
 
-    function handleEmailVerification() {
-        router.push(routes.onboarding.lifestyle)
+    async function handleVerifyEmail() {
+        try {
+            const result = await verifyEmail(email, verificationCode);
+
+            if (result.isSignUpComplete) {
+                await AsyncStorage.removeItem("pendingVerificationEmail");
+
+                router.replace({
+                    pathname: routes.onboarding.lifestyle,
+                    params: { accountCreated: "true" },
+                });
+            }
+        } catch (error) {
+            setFormError("The verification code is incorrect or has expired.");
+        }
     }
 
-    function handleResendCode() {
-        Alert.alert("Code resend unavailable", "This will be connected later.");
+    async function handleResendCode() {
+        try {
+            await resendVerificationCode(email);
+            Alert.alert("Code sent", "A new verification code has been emailed to you.");
+        } catch {
+            setFormError("We couldn't resend the code. Please try again.");
+        }
     }
 
     return (
@@ -80,13 +101,20 @@ export default function VerifyEmailScreen() {
                         />
 
 
-                        <AppButton title="Verify Email" onPress={handleEmailVerification} />
+                        <AppButton title="Verify Email" onPress={handleVerifyEmail} />
 
-                        <View style={styles.helperRow}>
-                            <Text style={styles.smallText}>Didn't receive an email? </Text>
-                            <TouchableOpacity onPress={handleResendCode}>
-                                <Text style={styles.loginText}>Resend code</Text>
-                            </TouchableOpacity>
+                        <View style={styles.helperContainer}>
+                            <Text style={styles.smallText}>
+                                Didn't receive an email?
+                            </Text>
+
+                            <View style={styles.helperRow}>
+                                <Text style={styles.smallText}>Check your spam or </Text>
+
+                                <TouchableOpacity onPress={handleResendCode}>
+                                    <Text style={styles.loginText}>resend the code</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </Card>
                 </View>
@@ -167,14 +195,21 @@ const styles = StyleSheet.create({
         color: theme.colors.primaryDark,
         textAlign: "left",
     },
+    helperContainer: {
+        marginTop: theme.spacing.sm,
+        alignItems: "center",
+        gap: 1,
+    },
     helperRow: {
         flexDirection: "row",
+        alignItems: "center",
         justifyContent: "center",
-        marginTop: theme.spacing.sm,
+        flexWrap: "wrap",
     },
     smallText: {
         fontSize: 12,
         color: theme.colors.text,
+        textAlign: "center",
     },
     loginText: {
         fontSize: 12,

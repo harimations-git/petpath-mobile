@@ -1,24 +1,71 @@
-import { signIn, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
+import { signIn, signUp, fetchAuthSession, getCurrentUser, resendSignUpCode, confirmSignUp } from "aws-amplify/auth";
 
 export async function loginUser(email: string, password: string) {
-  const result = await signIn({
-    username: email.trim().toLowerCase(),
-    password,
-  });
+    const result = await signIn({
+        username: email.trim().toLowerCase(),
+        password,
+    });
 
-  if (!result.isSignedIn) {
+    if (!result.isSignedIn) {
+        return {
+            isSignedIn: false,
+            nextStep: result.nextStep,
+        };
+    }
+
+    const user = await getCurrentUser();
+    const session = await fetchAuthSession();
+
     return {
-      isSignedIn: false,
-      nextStep: result.nextStep,
+        isSignedIn: true,
+        user,
+        tokens: session.tokens,
     };
-  }
+}
 
-  const user = await getCurrentUser();
-  const session = await fetchAuthSession();
+export async function registerUser(
+    fullName: string,
+    email: string,
+    password: string
+) {
+    const normalisedEmail = email.trim().toLowerCase();
+    return await signUp({
+        username: normalisedEmail,
+        password,
+        options: {
+            userAttributes: {
+                email: normalisedEmail,
+                name: fullName.trim()
+            }
+        }
+    });
+}
 
-  return {
-    isSignedIn: true,
-    user,
-    tokens: session.tokens,
-  };
+export function getSignUpErrorMessage(error: unknown) {
+    const errorName =
+        error instanceof Error ? error.name : "";
+
+    switch (errorName) {
+        case "UsernameExistsException":
+            return "An account already exists with this email address.";
+        case "InvalidPasswordException":
+            return "Use 8+ characters with uppercase, lowercase, a number and a symbol.";
+        case "LimitExceededException":
+            return "Too many attempts. Please wait and try again.";
+        default:
+            return "We couldn't create your account. Please try again.";
+    }
+}
+
+export async function verifyEmail(email: string, code: string) {
+    return confirmSignUp({
+        username: email.trim().toLowerCase(),
+        confirmationCode: code.trim(),
+    });
+}
+
+export async function resendVerificationCode(email: string) {
+    return resendSignUpCode({
+        username: email.trim().toLowerCase(),
+    });
 }
