@@ -217,6 +217,8 @@ export default function CreateAccountScreen() {
                 onClose={() => {
                     setInfoModalVisible(false);
 
+                    router.push(routes.onboarding.location)
+
                     // router.push("/(onboarding)/location-permission");
                     //and backend stuff
                 }}

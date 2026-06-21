@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { theme } from "../../src/constants/theme";
+import "../../src/config/amplify";
 
 export default function RootLayout() {
   return (

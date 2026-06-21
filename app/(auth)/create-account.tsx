@@ -1,9 +1,15 @@
 import React, { useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 
 import { routes } from "../../src/constants/routes";
 import { router } from "expo-router";
+
+import { registerUser, resendVerificationCode, getSignUpErrorMessage } from "../../src/services/auth/authService";
+import { validateCreateAccount } from "../../src/utils/validation/authValidation";
+
+
 
 import Screen from "../../src/components/layout/Screen"
 import AppTextInput from "../../src/components/ui/AppTextInput"
@@ -24,15 +30,64 @@ export default function CreateAccountScreen() {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [notifySavedPets, setNotifySavedPets] = useState(false);
 
-    function handleCreateAccount() {
-        if (!acceptedTerms) {
-            Alert.alert(
-                "Terms required",
-                "You need to accept PetPath’s Terms of Service and Privacy Policy before creating an account."
-            );
+    const [isLoading, setIsLoading] = useState(false);
+    const [formError, setFormError] = useState("");
+
+    async function handleCreateAccount() {
+        const validationError = validateCreateAccount({
+            fullName,
+            email,
+            password,
+            confirmPassword,
+            acceptedTerms,
+        });
+
+        if (validationError) {
+            setFormError(validationError);
             return;
         }
-        router.push(routes.auth.verifyEmail)
+
+        const normalisedEmail = email.trim().toLowerCase();
+
+        async function goToVerification() {
+            await AsyncStorage.setItem(
+                "pendingVerificationEmail",
+                normalisedEmail
+            );
+
+            router.replace({
+                pathname: routes.auth.verifyEmail,
+                params: { email: normalisedEmail },
+            });
+        }
+
+        try {
+            setIsLoading(true);
+            setFormError("");
+
+            await registerUser(fullName, normalisedEmail, password);
+            await goToVerification();
+
+        } catch (error: any) {
+            if (error?.name === "UsernameExistsException") {
+                try {
+                    // This succeeds when the existing account is unconfirmed.
+                    await resendVerificationCode(normalisedEmail);
+                    await goToVerification();
+                    return;
+                } catch {
+                    // A confirmed account cannot receive another signup code.
+                    setFormError(
+                        "An account already exists with this email address."
+                    );
+                    return;
+                }
+            }
+
+            setFormError(getSignUpErrorMessage(error));
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     function handleTermsOfService() {
@@ -104,7 +159,10 @@ export default function CreateAccountScreen() {
                             placeholder="Enter your full name"
                             iconName="person"
                             value={fullName}
-                            onChangeText={setFullName}
+                            onChangeText={(text) => {
+                                setFormError("");
+                                setFullName(text)
+                            }}
                             autoCapitalize="words"
                         />
 
@@ -115,7 +173,10 @@ export default function CreateAccountScreen() {
                             keyboardType="email-address"
                             autoCapitalize="none"
                             value={email}
-                            onChangeText={setEmail}
+                            onChangeText={(text) => {
+                                setFormError("");
+                                setEmail(text)
+                            }}
                         />
 
                         <AppTextInput
@@ -124,7 +185,10 @@ export default function CreateAccountScreen() {
                             iconName="lock-closed"
                             isPassword
                             value={password}
-                            onChangeText={setPassword}
+                            onChangeText={(text) => {
+                                setFormError("");
+                                setPassword(text)
+                            }}
                         />
 
                         <AppTextInput
@@ -133,8 +197,15 @@ export default function CreateAccountScreen() {
                             iconName="lock-closed"
                             isPassword
                             value={confirmPassword}
-                            onChangeText={setConfirmPassword}
+                            onChangeText={(text) => {
+                                setFormError("");
+                                setConfirmPassword(text)
+                            }}
                         />
+
+                        {formError ? (
+                            <Text style={styles.errorText}>{formError}</Text>
+                        ) : null}
 
                         <TouchableOpacity
                             style={styles.checkboxRow}
@@ -171,7 +242,11 @@ export default function CreateAccountScreen() {
                             </Text>
                         </TouchableOpacity>
 
-                        <AppButton title="Create account" onPress={handleCreateAccount} />
+                        <AppButton
+                            title={isLoading ? "Creating account..." : "Create account"}
+                            onPress={handleCreateAccount}
+                            disabled={isLoading}
+                        />
 
                         <View style={styles.loginRow}>
                             <Text style={styles.smallText}>Already have an account? </Text>
@@ -263,7 +338,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         lineHeight: 17,
         color: theme.colors.text,
-        marginBottom:theme.spacing.sm,
+        marginBottom: theme.spacing.sm,
     },
     linkText: {
         color: theme.colors.primaryDark,
@@ -297,6 +372,12 @@ const styles = StyleSheet.create({
         position: "relative",
         zIndex: 2,
         elevation: 2,
+    },
+    errorText: {
+        color: theme.colors.error,
+        fontSize: 14,
+        textAlign: "center",
+        marginBottom: theme.spacing.sm,
     },
 
 });

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Screen from "../../src/components/layout/Screen"
 import AppTextInput from "../../src/components/ui/AppTextInput"
@@ -8,21 +8,111 @@ import AppButton from "../../src/components/ui/AppButton"
 import SocialButton from "../../src/components/ui/SocialButton"
 import Logo from "../../src/components/ui/Logo"
 import Card from "../../src/components/ui/Card"
+import NoticeMessage from "../../src/components/ui/NoticeMessage";
+import Spacer from "../../src/components/layout/Spacer";
 import { theme } from "../../src/constants/theme";
 
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { routes } from "../../src/constants/routes";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { loginUser } from "../../src/services/auth/authService";
 
 export default function LoginScreen() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
 
-    function handleLogin() {
-        Alert.alert("Login unavailable", "This will be connected later.");
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [loginError, setLoginError] = useState("");
+
+    const { accountCreated } = useLocalSearchParams<{
+        accountCreated?: string;
+    }>();
+
+    const [showAccountCreatedMessage, setShowAccountCreatedMessage] = useState(
+        accountCreated === "true"
+    );
+
+    async function handleLogin() {
+        if (loginLoading) return;
+
+        if (!email.trim() || !password.trim()) {
+            setLoginError("Please enter your email address and password.");
+            return;
+        }
+
+        const normalisedEmail = email.trim().toLowerCase();
+
+        try {
+            setLoginLoading(true);
+            setLoginError("");
+
+            const pendingEmail = await AsyncStorage.getItem(
+                "pendingVerificationEmail"
+            );
+
+            if (pendingEmail === normalisedEmail) {
+                router.replace({
+                    pathname: routes.auth.verifyEmail,
+                    params: { email: normalisedEmail },
+                });
+                return;
+            }
+
+            const result = await loginUser(normalisedEmail, password);
+
+            console.log("Login result:", JSON.stringify(result, null, 2));
+
+            if (result.isSignedIn) {
+                Alert.alert("Success");
+                return;
+            }
+
+            if (result.nextStep?.signInStep === "CONFIRM_SIGN_UP") {
+                await AsyncStorage.setItem(
+                    "pendingVerificationEmail",
+                    normalisedEmail
+                );
+
+                router.replace({
+                    pathname: routes.auth.verifyEmail,
+                    params: { email: normalisedEmail },
+                });
+                return;
+            }
+
+            setLoginError("Your account needs another step before you can log in.");
+        } catch (error: any) {
+            console.log("Login error name:", error?.name);
+
+            if (error?.name === "UserNotConfirmedException") {
+                await AsyncStorage.setItem(
+                    "pendingVerificationEmail",
+                    normalisedEmail
+                );
+
+                router.replace({
+                    pathname: routes.auth.verifyEmail,
+                    params: { email: normalisedEmail },
+                });
+                return;
+            }
+
+            if (
+                error?.name === "NotAuthorizedException" ||
+                error?.name === "UserNotFoundException"
+            ) {
+                setLoginError("Invalid email or password.");
+                return;
+            }
+
+            setLoginError(error?.message || "Login failed. Please try again.");
+        } finally {
+            setLoginLoading(false);
+        }
     }
 
-    function handleCreateAccount() {
+    function handleCreateNewAccount() {
         router.push(routes.auth.createAccount)
     }
 
@@ -35,7 +125,7 @@ export default function LoginScreen() {
     }
     return (
         <Screen>
-            <Logo hasTagline={true}/>
+            <Logo hasTagline={true} />
 
             <View style={styles.hero}>
                 <View style={styles.heroText}>
@@ -54,6 +144,16 @@ export default function LoginScreen() {
             </View>
 
             <Card>
+                {showAccountCreatedMessage && (
+                    <>
+                        <NoticeMessage
+                            iconName="key"
+                            message="Account created successfully! You’re all set — log in to continue your PetPath journey."
+                        />
+                        <Spacer height={20} />
+                    </>
+                )}
+
                 <AppTextInput
                     label="Email address"
                     placeholder="Enter your email address"
@@ -61,7 +161,11 @@ export default function LoginScreen() {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={(text) => {
+                        setEmail(text);
+                        setLoginError("");
+                        setShowAccountCreatedMessage(false);
+                    }}
                 />
                 <AppTextInput
                     label="Password"
@@ -69,8 +173,19 @@ export default function LoginScreen() {
                     iconName="lock-closed"
                     isPassword
                     value={password}
-                    onChangeText={setPassword}
+                    onChangeText={(text) => {
+                        setPassword(text);
+                        setLoginError("");
+                        setShowAccountCreatedMessage(false);
+                    }}
                 />
+
+                {loginError ? (
+                    <>
+                        <Text style={styles.loginError}>{loginError}</Text>
+                        <Spacer height={10} />
+                    </>
+                ) : null}
 
                 <View style={styles.optionsRow}>
                     <TouchableOpacity style={styles.rememberRow}
@@ -95,7 +210,7 @@ export default function LoginScreen() {
                 <View style={styles.createRow}>
                     <Text style={styles.smallText}>Don't have an account?</Text>
                     <TouchableOpacity>
-                        <Text style={styles.linkText} onPress={handleCreateAccount}>Create account</Text>
+                        <Text style={styles.linkText} onPress={handleCreateNewAccount}>Create account</Text>
                     </TouchableOpacity>
                 </View>
             </Card>
@@ -232,5 +347,11 @@ const styles = StyleSheet.create({
         color: theme.colors.primary,
         fontWeight: "700",
         textDecorationLine: "underline",
+    },
+    loginError: {
+        color: theme.colors.error,
+        fontSize: 12,
+        fontWeight: "700",
+        textAlign: "center",
     },
 });
