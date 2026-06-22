@@ -20,6 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loginUser } from "../../src/services/auth/authService";
 import { redirectAfterLogin } from "../../src/utils/navigation/redirectAfterLogin";
 import { getCurrentUser, signOut } from "aws-amplify/auth";
+import { savePendingNotificationPreference } from "../../src/services/user/notificationPreferenceService";
 
 export default function LoginScreen() {
     const [email, setEmail] = useState("");
@@ -29,13 +30,18 @@ export default function LoginScreen() {
     const [loginLoading, setLoginLoading] = useState(false);
     const [loginError, setLoginError] = useState("");
 
-    const { accountCreated } = useLocalSearchParams<{
+    type LoginNotice = "accountCreated" | "passwordReset" | null;
+
+    const { accountCreated, passwordReset } = useLocalSearchParams<{
         accountCreated?: string;
+        passwordReset?: string;
     }>();
 
-    const [showAccountCreatedMessage, setShowAccountCreatedMessage] = useState(
-        accountCreated === "true"
-    );
+    const [loginNotice, setLoginNotice] = useState<LoginNotice>(() => {
+        if (passwordReset === "true") return "passwordReset";
+        if (accountCreated === "true") return "accountCreated";
+        return null;
+    });
 
     async function handleLogin() {
         if (loginLoading) return;
@@ -75,10 +81,18 @@ export default function LoginScreen() {
             console.log("Login result:", JSON.stringify(result, null, 2));
 
             if (result.isSignedIn) {
+                try {
+                    await savePendingNotificationPreference(normalisedEmail);
+                } catch (error) {
+                    console.error(
+                        "Pending notification preference failed:",
+                        error
+                    );
+                }
+
                 await redirectAfterLogin();
                 return;
             }
-
 
 
             if (result.nextStep?.signInStep === "CONFIRM_SIGN_UP") {
@@ -128,8 +142,16 @@ export default function LoginScreen() {
     }
 
     function handleForgetPassword() {
-        Alert.alert("Forget Password unavailable", "This will be connected later.");
+        if (loginLoading) return;
+
+        router.push({
+            pathname: routes.auth.forgotPassword,
+            params: {
+                email: email.trim().toLowerCase(),
+            },
+        });
     }
+
     return (
         <Screen>
             <Logo hasTagline={true} />
@@ -151,11 +173,15 @@ export default function LoginScreen() {
             </View>
 
             <Card>
-                {showAccountCreatedMessage && (
+                {loginNotice && (
                     <>
                         <NoticeMessage
                             iconName="key"
-                            message="Account created successfully! You’re all set — log in to continue your PetPath journey."
+                            message={
+                                loginNotice === "accountCreated"
+                                    ? "Account created successfully! Log in to continue your PetPath journey."
+                                    : "Password reset successfully! Log in using your new password."
+                            }
                         />
                         <Spacer height={20} />
                     </>
@@ -171,7 +197,7 @@ export default function LoginScreen() {
                     onChangeText={(text) => {
                         setEmail(text);
                         setLoginError("");
-                        setShowAccountCreatedMessage(false);
+                        setLoginNotice(null);
                     }}
                 />
                 <AppTextInput
@@ -183,7 +209,7 @@ export default function LoginScreen() {
                     onChangeText={(text) => {
                         setPassword(text);
                         setLoginError("");
-                        setShowAccountCreatedMessage(false);
+                        setLoginNotice(null);
                     }}
                 />
 

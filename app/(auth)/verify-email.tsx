@@ -70,6 +70,7 @@ export default function VerifyEmailScreen() {
             </View>
 
             <View style={styles.cardLayer}>
+                
 
                 <View style={styles.cardWrapper}>
                     <Card>

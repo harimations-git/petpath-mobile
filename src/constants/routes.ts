@@ -8,7 +8,6 @@ export const routes = {
     createAccount: "/(auth)/create-account",
     verifyEmail: "/(auth)/verify-email",
     forgotPassword: "/(auth)/forgot-password",
-
   },
   onboarding: {
     lifestyle: "/(onboarding)/lifestyle-questionnaire",

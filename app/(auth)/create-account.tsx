@@ -11,8 +11,6 @@ import { registerUser, resendVerificationCode, getSignUpErrorMessage, loginUser 
 import { validateCreateAccount } from "../../src/utils/validation/authValidation";
 import { redirectAfterLogin } from "../../src/utils/navigation/redirectAfterLogin";
 
-
-
 import Screen from "../../src/components/layout/Screen"
 import AppTextInput from "../../src/components/ui/AppTextInput"
 import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
@@ -52,11 +50,21 @@ export default function CreateAccountScreen() {
 
         const normalisedEmail = email.trim().toLowerCase();
 
+        async function storePendingRegistration() {
+            await AsyncStorage.multiSet([
+                ["pendingVerificationEmail", normalisedEmail],
+                [
+                    "pendingNotificationPreference",
+                    JSON.stringify({
+                        email: normalisedEmail,
+                        savedPetStatusEmailsEnabled: notifySavedPets,
+                    }),
+                ],
+            ]);
+        }
+
         async function goToVerification() {
-            await AsyncStorage.setItem(
-                "pendingVerificationEmail",
-                normalisedEmail
-            );
+            await storePendingRegistration();
 
             router.replace({
                 pathname: routes.auth.verifyEmail,
@@ -68,71 +76,80 @@ export default function CreateAccountScreen() {
             setIsLoading(true);
             setFormError("");
 
-            await registerUser(fullName, normalisedEmail, password);
+            await registerUser(
+                fullName.trim(),
+                normalisedEmail,
+                password
+            );
+
             await goToVerification();
-
         } catch (error: any) {
-            if (error?.name === "UsernameExistsException") {
-                try {
-                    // Sign out any account already active on this device.
-                    try {
-                        await getCurrentUser();
-                        await signOut();
-                    } catch {
-                        // No active session.
-                    }
+            if (error?.name !== "UsernameExistsException") {
+                await AsyncStorage.removeItem("pendingVerificationEmail");
 
-                    const loginResult = await loginUser(
-                        normalisedEmail,
-                        password
-                    );
-
-                    if (loginResult.isSignedIn) {
-                        await AsyncStorage.removeItem(
-                            "pendingVerificationEmail"
-                        );
-
-                        await redirectAfterLogin();
-                        return;
-                    }
-
-                    setFormError(
-                        "This account requires another sign-in step."
-                    );
-                } catch (loginError: any) {
-                    if (loginError?.name === "UserNotConfirmedException") {
-                        try {
-                            await resendVerificationCode(normalisedEmail);
-                            await goToVerification();
-                        } catch {
-                            setFormError(
-                                "We couldn't resend your verification code."
-                            );
-                        }
-
-                        return;
-                    }
-
-                    if (
-                        loginError?.name === "NotAuthorizedException" ||
-                        loginError?.name === "UserNotFoundException"
-                    ) {
-                        setFormError(
-                            "An account already exists with this email. Please check your password or log in."
-                        );
-                        return;
-                    }
-
-                    console.error("Existing account error:", loginError);
-
-                    setFormError(
-                        "We couldn't continue with this account. Please try logging in."
-                    );
-                }
+                setFormError(getSignUpErrorMessage(error));
                 return;
             }
 
-            setFormError(getSignUpErrorMessage(error));
+            try {
+                // Prevent an existing session from blocking this login attempt.
+                try {
+                    await getCurrentUser();
+                    await signOut();
+                } catch {
+                    // There was no active session.
+                }
+
+                const loginResult = await loginUser(
+                    normalisedEmail,
+                    password
+                );
+
+                if (loginResult.isSignedIn) {
+                    await AsyncStorage.removeItem("pendingVerificationEmail");
+
+                    await redirectAfterLogin();
+                    return;
+                }
+
+                setFormError(
+                    "This account requires another sign-in step."
+                );
+            } catch (loginError: any) {
+                if (loginError?.name === "UserNotConfirmedException") {
+                    try {
+                        await resendVerificationCode(normalisedEmail);
+                        await goToVerification();
+                    } catch {
+                        setFormError(
+                            "We couldn't resend your verification code."
+                        );
+                    }
+
+                    return;
+                }
+
+                await AsyncStorage.multiRemove([
+                    "pendingVerificationEmail",
+                    "pendingNotificationPreference",
+                ]);
+
+                if (
+                    loginError?.name === "NotAuthorizedException" ||
+                    loginError?.name === "UserNotFoundException"
+                ) {
+                    setFormError(
+                        "An account already exists with this email. Check your password or log in."
+                    );
+                    return;
+                }
+
+                console.error("Existing account error:", loginError);
+
+                setFormError(
+                    "We couldn't continue with this account. Please try logging in."
+                );
+            }
         } finally {
             setIsLoading(false);
         }
@@ -276,7 +293,10 @@ export default function CreateAccountScreen() {
                         <TouchableOpacity
                             style={styles.checkboxRow}
                             activeOpacity={0.8}
-                            onPress={() => setNotifySavedPets(!notifySavedPets)}
+                            onPress={() => {
+                                setNotifySavedPets((current) => !current);
+                                setFormError("");
+                            }}
                         >
                             <View style={[styles.checkbox, notifySavedPets && styles.checkboxActive]}>
                                 {notifySavedPets && (
