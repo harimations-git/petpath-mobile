@@ -4,9 +4,9 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { routes } from "../../src/constants/routes";
 import { router } from "expo-router";
+import { saveLifestyleProfile } from "../../src/services/user/lifestyleProfileService";
 
 import Screen from "../../src/components/layout/Screen"
-import AppTextInput from "../../src/components/ui/AppTextInput"
 import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
 import AppButton from "../../src/components/ui/AppButton"
 import Logo from "../../src/components/ui/Logo"
@@ -16,6 +16,7 @@ import AuthProgressStepper from "../../src/components/ui/auth/AuthProgressSteppe
 import { theme } from "../../src/constants/theme";
 import PillDropdown from "../../src/components/ui/PillDropdown";
 import InfoModal from "../../src/components/ui/infoModal";
+import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 
 export default function CreateAccountScreen() {
     const [homeType, setHomeType] = useState("");
@@ -28,7 +29,7 @@ export default function CreateAccountScreen() {
     //const [missingFields, setMissingFields] = useState<string[]>([]);
     const [formError, setFormError] = useState("");
     const [infoModalVisible, setInfoModalVisible] = useState(false);
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     function handleContinue() {
         const allFieldsChosen =
@@ -46,6 +47,31 @@ export default function CreateAccountScreen() {
 
         setFormError("");
         setInfoModalVisible(true);
+    }
+
+    async function handleSubmitQuestionnaire() {
+        if (isSubmitting) return;
+
+        try {
+            setIsSubmitting(true);
+            setFormError("");
+
+            await saveLifestyleProfile({
+                homeType, outdoorSpace, activityLevel, dailyRoutine, budget, petExperience,
+            });
+
+            setInfoModalVisible(true);
+        } catch (error) {
+            console.error("Questionnaire error: ", error)
+
+            setInfoModalVisible(false);
+
+            setFormError(
+                error instanceof Error ? error.message : "We couldn't save your answers. Please try again."
+            )
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
     return (
@@ -202,7 +228,13 @@ export default function CreateAccountScreen() {
                             <Text style={styles.formError}>{formError}</Text>
                         ) : null}
 
-                        <AppButton title="Continue" onPress={handleContinue} />
+                        {isSubmitting ? (
+                            <LoadingSpinner size="small" />
+                        ) : (
+                            <>
+                                <AppButton title="Continue" onPress={handleSubmitQuestionnaire} />
+                            </>
+                        )}
                     </Card>
                 </View>
             </View>
@@ -216,11 +248,7 @@ export default function CreateAccountScreen() {
                 iconName="leaf-outline"
                 onClose={() => {
                     setInfoModalVisible(false);
-
-                    router.push(routes.onboarding.location)
-
-                    // router.push("/(onboarding)/location-permission");
-                    //and backend stuff
+                    router.replace(routes.onboarding.location);
                 }}
             />
         </Screen>

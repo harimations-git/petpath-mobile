@@ -6,8 +6,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { routes } from "../../src/constants/routes";
 import { router } from "expo-router";
 
-import { registerUser, resendVerificationCode, getSignUpErrorMessage } from "../../src/services/auth/authService";
+import { getCurrentUser, signOut } from "aws-amplify/auth";
+import { registerUser, resendVerificationCode, getSignUpErrorMessage, loginUser } from "../../src/services/auth/authService";
 import { validateCreateAccount } from "../../src/utils/validation/authValidation";
+import { redirectAfterLogin } from "../../src/utils/navigation/redirectAfterLogin";
 
 
 
@@ -20,6 +22,7 @@ import Card from "../../src/components/ui/Card"
 import BackButton from "../../src/components/ui/BackButton";
 import AuthProgressStepper from "../../src/components/ui/auth/AuthProgressStepper";
 import { theme } from "../../src/constants/theme";
+import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 
 export default function CreateAccountScreen() {
     const [fullName, setFullName] = useState("");
@@ -71,17 +74,62 @@ export default function CreateAccountScreen() {
         } catch (error: any) {
             if (error?.name === "UsernameExistsException") {
                 try {
-                    // This succeeds when the existing account is unconfirmed.
-                    await resendVerificationCode(normalisedEmail);
-                    await goToVerification();
-                    return;
-                } catch {
-                    // A confirmed account cannot receive another signup code.
-                    setFormError(
-                        "An account already exists with this email address."
+                    // Sign out any account already active on this device.
+                    try {
+                        await getCurrentUser();
+                        await signOut();
+                    } catch {
+                        // No active session.
+                    }
+
+                    const loginResult = await loginUser(
+                        normalisedEmail,
+                        password
                     );
-                    return;
+
+                    if (loginResult.isSignedIn) {
+                        await AsyncStorage.removeItem(
+                            "pendingVerificationEmail"
+                        );
+
+                        await redirectAfterLogin();
+                        return;
+                    }
+
+                    setFormError(
+                        "This account requires another sign-in step."
+                    );
+                } catch (loginError: any) {
+                    if (loginError?.name === "UserNotConfirmedException") {
+                        try {
+                            await resendVerificationCode(normalisedEmail);
+                            await goToVerification();
+                        } catch {
+                            setFormError(
+                                "We couldn't resend your verification code."
+                            );
+                        }
+
+                        return;
+                    }
+
+                    if (
+                        loginError?.name === "NotAuthorizedException" ||
+                        loginError?.name === "UserNotFoundException"
+                    ) {
+                        setFormError(
+                            "An account already exists with this email. Please check your password or log in."
+                        );
+                        return;
+                    }
+
+                    console.error("Existing account error:", loginError);
+
+                    setFormError(
+                        "We couldn't continue with this account. Please try logging in."
+                    );
                 }
+                return;
             }
 
             setFormError(getSignUpErrorMessage(error));
@@ -242,18 +290,23 @@ export default function CreateAccountScreen() {
                             </Text>
                         </TouchableOpacity>
 
-                        <AppButton
-                            title={isLoading ? "Creating account..." : "Create account"}
-                            onPress={handleCreateAccount}
-                            disabled={isLoading}
-                        />
-
-                        <View style={styles.loginRow}>
-                            <Text style={styles.smallText}>Already have an account? </Text>
-                            <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
-                                <Text style={styles.loginText}>Log in</Text>
-                            </TouchableOpacity>
-                        </View>
+                        {isLoading ? (
+                            <LoadingSpinner size="small" />
+                        ) : (
+                            <>
+                                <AppButton
+                                    title={isLoading ? "Creating account..." : "Create account"}
+                                    onPress={handleCreateAccount}
+                                    disabled={isLoading}
+                                />
+                                <View style={styles.loginRow}>
+                                    <Text style={styles.smallText}>Already have an account? </Text>
+                                    <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+                                        <Text style={styles.loginText}>Log in</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        )}
                     </Card>
                 </View>
             </View>

@@ -15,14 +15,19 @@ import BackButton from "../../src/components/ui/BackButton";
 import AuthProgressStepper from "../../src/components/ui/auth/AuthProgressStepper";
 import VerificationCodeInput from "../../src/components/ui/auth/VerificationCodeInput";
 import { theme } from "../../src/constants/theme";
+import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 
 export default function VerifyEmailScreen() {
     const [verificationCode, setVerificationCode] = useState("");
     const { email } = useLocalSearchParams<{ email: string }>();
+
     const [formError, setFormError] = useState("");
+    const [loginLoading, setLoginLoading] = useState(false);
 
     async function handleVerifyEmail() {
+        if (loginLoading) return;
         try {
+            setLoginLoading(true)
             const result = await verifyEmail(email, verificationCode);
 
             if (result.isSignUpComplete) {
@@ -35,6 +40,8 @@ export default function VerifyEmailScreen() {
             }
         } catch (error) {
             setFormError("The verification code is incorrect or has expired.");
+        } finally{
+            setLoginLoading(false);
         }
     }
 
@@ -100,22 +107,27 @@ export default function VerifyEmailScreen() {
                             onChangeText={setVerificationCode}
                         />
 
+                        {loginLoading ? (
+                            <LoadingSpinner size="small" />
+                        ) : (
+                            <>
+                                <AppButton title="Verify Email" onPress={handleVerifyEmail} />
 
-                        <AppButton title="Verify Email" onPress={handleVerifyEmail} />
+                                <View style={styles.helperContainer}>
+                                    <Text style={styles.smallText}>
+                                        Didn't receive an email?
+                                    </Text>
+                                    <View style={styles.helperRow}>
+                                        <Text style={styles.smallText}>Check your spam or </Text>
 
-                        <View style={styles.helperContainer}>
-                            <Text style={styles.smallText}>
-                                Didn't receive an email?
-                            </Text>
+                                        <TouchableOpacity onPress={handleResendCode}>
+                                            <Text style={styles.loginText}>resend the code</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            </>
+                        )}
 
-                            <View style={styles.helperRow}>
-                                <Text style={styles.smallText}>Check your spam or </Text>
-
-                                <TouchableOpacity onPress={handleResendCode}>
-                                    <Text style={styles.loginText}>resend the code</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
                     </Card>
                 </View>
             </View>

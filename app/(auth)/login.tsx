@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
 import { Ionicons } from "@expo/vector-icons";
 import Screen from "../../src/components/layout/Screen"
 import AppTextInput from "../../src/components/ui/AppTextInput"
@@ -10,12 +11,15 @@ import Logo from "../../src/components/ui/Logo"
 import Card from "../../src/components/ui/Card"
 import NoticeMessage from "../../src/components/ui/NoticeMessage";
 import Spacer from "../../src/components/layout/Spacer";
+import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 import { theme } from "../../src/constants/theme";
 
 import { router, useLocalSearchParams } from "expo-router";
 import { routes } from "../../src/constants/routes";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loginUser } from "../../src/services/auth/authService";
+import { redirectAfterLogin } from "../../src/utils/navigation/redirectAfterLogin";
+import { getCurrentUser, signOut } from "aws-amplify/auth";
 
 export default function LoginScreen() {
     const [email, setEmail] = useState("");
@@ -59,14 +63,23 @@ export default function LoginScreen() {
                 return;
             }
 
+            try {
+                await getCurrentUser();
+                await signOut();
+            } catch {
+                // No existing session.
+            }
+
             const result = await loginUser(normalisedEmail, password);
 
             console.log("Login result:", JSON.stringify(result, null, 2));
 
             if (result.isSignedIn) {
-                Alert.alert("Success");
+                await redirectAfterLogin();
                 return;
             }
+
+
 
             if (result.nextStep?.signInStep === "CONFIRM_SIGN_UP") {
                 await AsyncStorage.setItem(
@@ -97,7 +110,6 @@ export default function LoginScreen() {
                 });
                 return;
             }
-
             if (
                 error?.name === "NotAuthorizedException" ||
                 error?.name === "UserNotFoundException"
@@ -105,7 +117,6 @@ export default function LoginScreen() {
                 setLoginError("Invalid email or password.");
                 return;
             }
-
             setLoginError(error?.message || "Login failed. Please try again.");
         } finally {
             setLoginLoading(false);
@@ -202,17 +213,21 @@ export default function LoginScreen() {
                         <Text style={styles.forgotText} onPress={handleForgetPassword}>Forgot password?</Text>
                     </TouchableOpacity>
                 </View>
+                {loginLoading ? (
+                    <LoadingSpinner size="small" />
+                ) : (
+                    <>
+                        <AppButton title="Log in" width={300} onPress={handleLogin} />
 
-                <AppButton title="Log in" width={300} onPress={handleLogin} />
+                        <View style={styles.createRow}>
+                            <Text style={styles.smallText}>Don't have an account?</Text>
+                            <TouchableOpacity>
+                                <Text style={styles.linkText} onPress={handleCreateNewAccount}>Create account</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                )}
 
-                <SocialButton onPress={handleGoogleLogin} />
-
-                <View style={styles.createRow}>
-                    <Text style={styles.smallText}>Don't have an account?</Text>
-                    <TouchableOpacity>
-                        <Text style={styles.linkText} onPress={handleCreateNewAccount}>Create account</Text>
-                    </TouchableOpacity>
-                </View>
             </Card>
             <View style={styles.page}>
                 <DecorativeLeaf
