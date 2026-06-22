@@ -15,7 +15,7 @@ export const routes = {
     location: "/(onboarding)/location-permission",
   },
   tabs: {
-    home: "/(tabs)",
+    home: "/(tabs)/home",
     matches: "/(tabs)/matches",
     savedPets: "/(tabs)/saved-pets",
     learn: "/(tabs)/learn",

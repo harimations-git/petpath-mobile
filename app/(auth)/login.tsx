@@ -127,10 +127,6 @@ export default function LoginScreen() {
         router.push(routes.auth.createAccount)
     }
 
-    function handleGoogleLogin() {
-        Alert.alert("Google login unavailable", "This will be connected later.");
-    }
-
     function handleForgetPassword() {
         Alert.alert("Forget Password unavailable", "This will be connected later.");
     }

@@ -3,8 +3,9 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { routes } from "../../src/constants/routes";
 import { router } from "expo-router";
-import { theme } from "../../src/constants/theme";
+import { saveLocationSettings } from "../../src/services/user/locationService";
 
+import { theme } from "../../src/constants/theme";
 import Screen from "../../src/components/layout/Screen"
 import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
 import AppButton from "../../src/components/ui/AppButton"
@@ -15,10 +16,10 @@ import AuthProgressStepper from "../../src/components/ui/auth/AuthProgressSteppe
 import InfoModal from "../../src/components/ui/infoModal";
 import DistanceSlider from "../../src/components/ui/DistanceSlider";
 import Spacer from "../../src/components/layout/Spacer";
-
 import LocationPermissionButton from "../../src/components/ui/LocationPermissionButton";
 import type { ApproximateLocation } from "../../src/components/ui/LocationPermissionButton";
 import NoticeMessage from "../../src/components/ui/NoticeMessage";
+import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 
 
 type LocationAccess =
@@ -39,30 +40,33 @@ export default function CreateAccountScreen() {
     const [formError, setFormError] = useState("");
     const [infoModalVisible, setInfoModalVisible] = useState(false);
 
-    function handleContinue() {
+    const [isLoading, setIsLoading] = useState(false);
+
+    async function handleContinue() {
         if (locationAccess.status !== "granted") {
             setFormError("Please allow location access before continuing.");
             return;
         }
 
-        const locationSettings = {
-            latitude: locationAccess.latitude,
-            longitude: locationAccess.longitude,
-            searchDistance: distance,
-            approximate: locationAccess.approximate,
-        };
+        try {
+            setIsLoading(true);
+            setFormError("");
 
-        console.log(locationSettings);
+            await saveLocationSettings({
+                latitude: locationAccess.latitude,
+                longitude: locationAccess.longitude,
+                searchDistance: distance,
+            });
 
-        setFormError("");
-        setInfoModalVisible(true);
-    }
-
-    console.log(distance);
-
-    if (locationAccess.status === "granted") {
-        console.log("Latitude:", locationAccess.latitude);
-        console.log("Longitude:", locationAccess.longitude);
+            setInfoModalVisible(true);
+        } catch (error: any) {
+            console.error("Location settings error:", error);
+            setFormError(
+                error?.message || "Unable to save your location settings."
+            );
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     return (
@@ -170,7 +174,13 @@ export default function CreateAccountScreen() {
                             <Text style={styles.formError}>{formError}</Text>
                         ) : null}
 
-                        <AppButton title="Continue" onPress={handleContinue} />
+                        {isLoading ? (
+                            <LoadingSpinner size="small" />
+                        ) : (
+                            <>
+                                <AppButton title="Continue" onPress={handleContinue} disabled={isLoading} />
+                            </>
+                        )}
                     </Card>
                 </View>
             </View>
@@ -184,7 +194,7 @@ export default function CreateAccountScreen() {
                 iconName="leaf-outline"
                 onClose={() => {
                     setInfoModalVisible(false);
-
+                    setIsLoading(false);
                     router.replace({
                         pathname: routes.auth.login,
                         params: {
