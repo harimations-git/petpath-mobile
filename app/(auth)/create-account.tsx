@@ -34,6 +34,17 @@ export default function CreateAccountScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [formError, setFormError] = useState("");
 
+    async function clearExistingSession() {
+        try {
+            await getCurrentUser();
+            await signOut();
+        } catch (error: any) {
+            if (error?.name !== "UserUnAuthenticatedException") {
+                throw error;
+            }
+        }
+    }
+
     async function handleCreateAccount() {
         const validationError = validateCreateAccount({
             fullName,
@@ -75,6 +86,8 @@ export default function CreateAccountScreen() {
         try {
             setIsLoading(true);
             setFormError("");
+
+            await clearExistingSession();
 
             await registerUser(
                 fullName.trim(),

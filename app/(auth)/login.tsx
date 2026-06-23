@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 import Screen from "../../src/components/layout/Screen"
 import AppTextInput from "../../src/components/ui/AppTextInput"
 import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
 import AppButton from "../../src/components/ui/AppButton"
-import SocialButton from "../../src/components/ui/SocialButton"
 import Logo from "../../src/components/ui/Logo"
 import Card from "../../src/components/ui/Card"
 import NoticeMessage from "../../src/components/ui/NoticeMessage";
@@ -20,12 +19,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loginUser } from "../../src/services/auth/authService";
 import { redirectAfterLogin } from "../../src/utils/navigation/redirectAfterLogin";
 import { getCurrentUser, signOut } from "aws-amplify/auth";
-import { savePendingNotificationPreference } from "../../src/services/user/notificationPreferenceService";
+
 
 export default function LoginScreen() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [rememberMe, setRememberMe] = useState(false);
 
     const [loginLoading, setLoginLoading] = useState(false);
     const [loginError, setLoginError] = useState("");
@@ -79,15 +77,6 @@ export default function LoginScreen() {
             const result = await loginUser(normalisedEmail, password);
 
             if (result.isSignedIn) {
-                try {
-                    await savePendingNotificationPreference(normalisedEmail);
-                } catch (error) {
-                    console.error(
-                        "Pending notification preference failed:",
-                        error
-                    );
-                }
-
                 await redirectAfterLogin();
                 return;
             }
@@ -158,7 +147,7 @@ export default function LoginScreen() {
                 <View style={styles.heroText}>
                     <Text style={styles.title}>Welcome Back</Text>
                     <Text style={styles.subtitle}>
-                        Log in to view your matches and continue finding the right pet for your lifestyle.
+                        Continue discovering adoptable pets matched to your home, lifestyle and experience.
                     </Text>
                 </View>
 
@@ -170,90 +159,11 @@ export default function LoginScreen() {
                 </View>
             </View>
 
-            <Card>
-                {loginNotice && (
-                    <>
-                        <NoticeMessage
-                            iconName="key"
-                            message={
-                                loginNotice === "accountCreated"
-                                    ? "Account created successfully! Log in to continue your PetPath journey."
-                                    : "Password reset successfully! Log in using your new password."
-                            }
-                        />
-                        <Spacer height={20} />
-                    </>
-                )}
-
-                <AppTextInput
-                    label="Email address"
-                    placeholder="Enter your email address"
-                    iconName="mail"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    value={email}
-                    onChangeText={(text) => {
-                        setEmail(text);
-                        setLoginError("");
-                        setLoginNotice(null);
-                    }}
-                />
-                <AppTextInput
-                    label="Password"
-                    placeholder="Enter your password"
-                    iconName="lock-closed"
-                    isPassword
-                    value={password}
-                    onChangeText={(text) => {
-                        setPassword(text);
-                        setLoginError("");
-                        setLoginNotice(null);
-                    }}
-                />
-
-                {loginError ? (
-                    <>
-                        <Text style={styles.loginError}>{loginError}</Text>
-                        <Spacer height={10} />
-                    </>
-                ) : null}
-
-                <View style={styles.optionsRow}>
-                    <TouchableOpacity style={styles.rememberRow}
-                        onPress={() => setRememberMe(!rememberMe)}
-                        activeOpacity={0.8}
-                    >
-                        <View style={[styles.checkbox, rememberMe && styles.checkboxActive]}>
-                            {rememberMe && <Ionicons name="checkmark" size={15} color="#ffffff" />}
-                        </View>
-                        <Text style={styles.optionText}>Remember me?</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity>
-                        <Text style={styles.forgotText} onPress={handleForgetPassword}>Forgot password?</Text>
-                    </TouchableOpacity>
-                </View>
-                {loginLoading ? (
-                    <LoadingSpinner size="small" />
-                ) : (
-                    <>
-                        <AppButton title="Log in" width={300} onPress={handleLogin} />
-
-                        <View style={styles.createRow}>
-                            <Text style={styles.smallText}>Don't have an account?</Text>
-                            <TouchableOpacity>
-                                <Text style={styles.linkText} onPress={handleCreateNewAccount}>Create account</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </>
-                )}
-
-            </Card>
-            <View style={styles.page}>
+            <View style={styles.cardLayer}>
                 <DecorativeLeaf
                     width={100}
                     height={100}
-                    bottom={60}
+                    bottom={-90}
                     left={-25}
                     rotate={90}
                     opacity={1}
@@ -263,15 +173,141 @@ export default function LoginScreen() {
                 <DecorativeLeaf
                     width={100}
                     height={100}
-                    bottom={60}
+                    bottom={-90}
                     right={-25}
                     rotate={-90}
                     flipX
                     opacity={1}
                     zIndex={-1}
                 />
+                <View style={styles.cardWrapper}>
+                    <Card>
+                        <View style={styles.formHeader}>
+                            <View style={styles.formIcon}>
+                                <Ionicons
+                                    name="lock-open-outline"
+                                    size={20}
+                                    color={theme.colors.primaryDark}
+                                />
+                            </View>
+
+                            <View style={styles.formHeaderText}>
+                                <Text style={styles.formTitle}>
+                                    Log in to your account
+                                </Text>
+                                <Text style={styles.formSubtitle}>
+                                    Enter your details below to continue.
+                                </Text>
+                            </View>
+                        </View>
+
+                        <Spacer height={20} />
+                        {loginNotice && (
+                            <>
+                                <NoticeMessage
+                                    iconName="key"
+                                    message={
+                                        loginNotice === "accountCreated"
+                                            ? "Account created successfully! Log in to continue your PetPath journey."
+                                            : "Password reset successfully! Log in using your new password."
+                                    }
+                                />
+                                <Spacer height={20} />
+                            </>
+                        )}
+
+                        <AppTextInput
+                            label="Email address"
+                            placeholder="Enter your email address"
+                            iconName="mail"
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            value={email}
+                            onChangeText={(text) => {
+                                setEmail(text);
+                                setLoginError("");
+                                setLoginNotice(null);
+                            }}
+                        />
+
+                        <AppTextInput
+                            label="Password"
+                            placeholder="Enter your password"
+                            iconName="lock-closed"
+                            isPassword
+                            value={password}
+                            onChangeText={(text) => {
+                                setPassword(text);
+                                setLoginError("");
+                                setLoginNotice(null);
+                            }}
+                        />
+
+                        {loginError ? (
+                            <View style={styles.errorContainer}>
+                                <Ionicons
+                                    name="alert-circle-outline"
+                                    size={16}
+                                    color={theme.colors.error}
+                                />
+                                <Text style={styles.loginError}>
+                                    {loginError}
+                                </Text>
+                            </View>
+                        ) : null}
+
+                        <View style={styles.passwordActions}>
+                            <TouchableOpacity
+                                onPress={handleForgetPassword}
+                                disabled={loginLoading}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={styles.forgotText}>
+                                    Forgot your password?
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <Spacer height={10} />
+
+                        {loginLoading ? (
+                            <LoadingSpinner size="small" />
+                        ) : (
+                            <>
+                                <AppButton
+                                    title="Log in"
+                                    width={300}
+                                    onPress={handleLogin}
+                                />
+
+                                <View style={styles.dividerRow}>
+                                    <View style={styles.dividerLine} />
+                                    <Text style={styles.dividerText}>
+                                        New to PetPath?
+                                    </Text>
+                                    <View style={styles.dividerLine} />
+                                </View>
+
+                                <TouchableOpacity
+                                    style={styles.createButton}
+                                    onPress={handleCreateNewAccount}
+                                    activeOpacity={0.75}
+                                >
+                                    <Ionicons
+                                        name="person-add-outline"
+                                        size={18}
+                                        color={theme.colors.primaryDark}
+                                    />
+                                    <Text style={styles.createButtonText}>
+                                        Create an account
+                                    </Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
+                    </Card>
+                </View>
             </View>
-        </Screen>
+        </Screen >
     );
 }
 
@@ -335,43 +371,17 @@ const styles = StyleSheet.create({
         paddingVertical: theme.spacing.lg,
     },
     optionsRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
         alignItems: "center",
-        marginTop: 10,
+        marginTop: 20,
     },
     rememberRow: {
         flexDirection: "row",
         alignItems: "center",
     },
-    checkbox: {
-        width: 23,
-        height: 23,
-        borderWidth: 2,
-        borderColor: theme.colors.text,
-        borderRadius: 4,
-        alignItems: "center",
-        justifyContent: "center",
-        marginRight: theme.spacing.sm,
-    },
-    checkboxActive: {
-        backgroundColor: theme.colors.primary,
-        borderColor: theme.colors.primary,
-    },
     optionText: {
         fontSize: 12,
+        alignSelf: "center",
         color: theme.colors.text,
-    },
-    forgotText: {
-        fontSize: 12,
-        color: theme.colors.primary,
-        textDecorationLine: "underline",
-    },
-    createRow: {
-        flexDirection: "row",
-        justifyContent: "center",
-        marginTop: theme.spacing.lg,
-        gap: 3
     },
     smallText: {
         fontSize: 12,
@@ -383,10 +393,118 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         textDecorationLine: "underline",
     },
+    forgotButton: {
+        alignSelf: "flex-end",
+        paddingVertical: 6,
+        paddingLeft: 12,
+    },
+
+    dividerRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginVertical: 22,
+    },
+
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: "#DCE5DB",
+    },
+
+    dividerText: {
+        marginHorizontal: 12,
+        fontSize: 12,
+        color: theme.colors.text,
+    },
+
+    createButton: {
+        minHeight: 48,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        borderWidth: 1.5,
+        borderColor: theme.colors.primaryDark,
+        borderRadius: 8,
+        backgroundColor: "#FFFFFF",
+    },
+
+    createButtonText: {
+        fontSize: 15,
+        fontWeight: "800",
+        color: theme.colors.primaryDark,
+    },
+
+    errorContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        marginTop: 8,
+        paddingHorizontal: 8,
+    },
+
     loginError: {
+        flexShrink: 1,
         color: theme.colors.error,
         fontSize: 12,
+        lineHeight: 17,
         fontWeight: "700",
         textAlign: "center",
+    },
+
+    passwordActions: {
+        alignItems: "center",
+        marginTop: 14,
+    },
+
+    forgotText: {
+        color: theme.colors.primaryDark,
+        fontSize: 12,
+        fontWeight: "700",
+        textDecorationLine: "underline",
+    },
+
+    formHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+
+    formIcon: {
+        width: 42,
+        height: 42,
+        borderRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: theme.colors.paleGreen,
+        marginLeft: 25,
+    },
+
+    formHeaderText: {
+        flex: 1,
+        marginLeft: 20,
+    },
+
+    formTitle: {
+        fontSize: 17,
+        lineHeight: 22,
+        fontWeight: "800",
+        color: theme.colors.primaryDark,
+    },
+
+    formSubtitle: {
+        marginTop: 2,
+        fontSize: 12,
+        lineHeight: 17,
+        color: theme.colors.text,
+    },
+    cardLayer: {
+        position: "relative",
+    },
+
+    cardWrapper: {
+        position: "relative",
+        zIndex: 2,
+        elevation: 2,
     },
 });

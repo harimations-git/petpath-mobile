@@ -186,21 +186,13 @@ export default function CreateAccountScreen() {
             </View>
             <InfoModal
                 visible={infoModalVisible}
-                title="Your location settings can change."
-                message={
-                    "You can update your location and search distance anytime in Settings"
-                }
-                buttonText="Got it"
+                title="Setup complete"
+                message="Your preferences have been saved. You can update them anytime in Settings."
+                buttonText="Start exploring"
                 iconName="leaf-outline"
                 onClose={() => {
                     setInfoModalVisible(false);
-                    setIsLoading(false);
-                    router.replace({
-                        pathname: routes.auth.login,
-                        params: {
-                            accountCreated: "true",
-                        },
-                    });
+                    router.replace(routes.tabs.home);
                 }}
             />
         </Screen>
