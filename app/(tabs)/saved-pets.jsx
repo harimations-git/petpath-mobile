@@ -17,7 +17,7 @@ export default function LoginScreen() {
 
             <View style={styles.hero}>
                 <View style={styles.heroText}>
-                    <Text style={styles.title}>Home</Text>
+                    <Text style={styles.title}>Saved Pets</Text>
                     <Text style={styles.subtitle}>
                         Thats why he is the G.O.A.T
                     </Text>

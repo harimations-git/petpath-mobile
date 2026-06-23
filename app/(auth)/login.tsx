@@ -78,8 +78,6 @@ export default function LoginScreen() {
 
             const result = await loginUser(normalisedEmail, password);
 
-            console.log("Login result:", JSON.stringify(result, null, 2));
-
             if (result.isSignedIn) {
                 try {
                     await savePendingNotificationPreference(normalisedEmail);
@@ -255,7 +253,7 @@ export default function LoginScreen() {
                 <DecorativeLeaf
                     width={100}
                     height={100}
-                    bottom={-40}
+                    bottom={60}
                     left={-25}
                     rotate={90}
                     opacity={1}
@@ -265,7 +263,7 @@ export default function LoginScreen() {
                 <DecorativeLeaf
                     width={100}
                     height={100}
-                    bottom={-40}
+                    bottom={60}
                     right={-25}
                     rotate={-90}
                     flipX

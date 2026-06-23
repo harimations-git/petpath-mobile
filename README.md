@@ -6,3 +6,5 @@ npx expo start
 
 # to run & clear cache
 npx expo start -c
+
+npx expo start --dev-client

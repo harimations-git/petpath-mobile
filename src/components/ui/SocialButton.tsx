@@ -7,6 +7,8 @@ type SocialButtonProps = {
     style?: ViewStyle;
 };
 
+//CURRENTLY NOT BEING USED
+
 export default function SocialButton({ onPress, style }: SocialButtonProps) {
     return (
         <Pressable

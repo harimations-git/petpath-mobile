@@ -13,7 +13,6 @@ export type UserProfile = {
 }
 
 export async function getCurrentUserProfile() {
-    console.log("API URL:", API_URL);
 
     if (!API_URL) {
         throw new Error("EXPO_PUBLIC_API_BASE_URL is not configured");
@@ -28,8 +27,6 @@ export async function getCurrentUserProfile() {
 
     const url = `${API_URL.replace(/\/$/, "")}/users/me`;
 
-    console.log("Requesting profile from:", url);
-
     const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -39,8 +36,6 @@ export async function getCurrentUserProfile() {
     });
 
     const body = await response.text();
-
-    console.log("Profile response:", response.status, body);
 
     if (!response.ok) {
         throw new Error(`Profile request failed: ${response.status}`);
