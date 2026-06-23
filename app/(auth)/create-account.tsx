@@ -6,10 +6,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { routes } from "../../src/constants/routes";
 import { router } from "expo-router";
 
-import { registerUser, resendVerificationCode, getSignUpErrorMessage } from "../../src/services/auth/authService";
+import { getCurrentUser, signOut } from "aws-amplify/auth";
+import { registerUser, resendVerificationCode, getSignUpErrorMessage, loginUser } from "../../src/services/auth/authService";
 import { validateCreateAccount } from "../../src/utils/validation/authValidation";
-
-
+import { redirectAfterLogin } from "../../src/utils/navigation/redirectAfterLogin";
 
 import Screen from "../../src/components/layout/Screen"
 import AppTextInput from "../../src/components/ui/AppTextInput"
@@ -20,6 +20,7 @@ import Card from "../../src/components/ui/Card"
 import BackButton from "../../src/components/ui/BackButton";
 import AuthProgressStepper from "../../src/components/ui/auth/AuthProgressStepper";
 import { theme } from "../../src/constants/theme";
+import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 
 export default function CreateAccountScreen() {
     const [fullName, setFullName] = useState("");
@@ -32,6 +33,17 @@ export default function CreateAccountScreen() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [formError, setFormError] = useState("");
+
+    async function clearExistingSession() {
+        try {
+            await getCurrentUser();
+            await signOut();
+        } catch (error: any) {
+            if (error?.name !== "UserUnAuthenticatedException") {
+                throw error;
+            }
+        }
+    }
 
     async function handleCreateAccount() {
         const validationError = validateCreateAccount({
@@ -49,11 +61,21 @@ export default function CreateAccountScreen() {
 
         const normalisedEmail = email.trim().toLowerCase();
 
+        async function storePendingRegistration() {
+            await AsyncStorage.multiSet([
+                ["pendingVerificationEmail", normalisedEmail],
+                [
+                    "pendingNotificationPreference",
+                    JSON.stringify({
+                        email: normalisedEmail,
+                        savedPetStatusEmailsEnabled: notifySavedPets,
+                    }),
+                ],
+            ]);
+        }
+
         async function goToVerification() {
-            await AsyncStorage.setItem(
-                "pendingVerificationEmail",
-                normalisedEmail
-            );
+            await storePendingRegistration();
 
             router.replace({
                 pathname: routes.auth.verifyEmail,
@@ -65,26 +87,82 @@ export default function CreateAccountScreen() {
             setIsLoading(true);
             setFormError("");
 
-            await registerUser(fullName, normalisedEmail, password);
-            await goToVerification();
+            await clearExistingSession();
 
+            await registerUser(
+                fullName.trim(),
+                normalisedEmail,
+                password
+            );
+
+            await goToVerification();
         } catch (error: any) {
-            if (error?.name === "UsernameExistsException") {
+            if (error?.name !== "UsernameExistsException") {
+                await AsyncStorage.removeItem("pendingVerificationEmail");
+
+                setFormError(getSignUpErrorMessage(error));
+                return;
+            }
+
+            try {
+                // Prevent an existing session from blocking this login attempt.
                 try {
-                    // This succeeds when the existing account is unconfirmed.
-                    await resendVerificationCode(normalisedEmail);
-                    await goToVerification();
-                    return;
+                    await getCurrentUser();
+                    await signOut();
                 } catch {
-                    // A confirmed account cannot receive another signup code.
+                    // There was no active session.
+                }
+
+                const loginResult = await loginUser(
+                    normalisedEmail,
+                    password
+                );
+
+                if (loginResult.isSignedIn) {
+                    await AsyncStorage.removeItem("pendingVerificationEmail");
+
+                    await redirectAfterLogin();
+                    return;
+                }
+
+                setFormError(
+                    "This account requires another sign-in step."
+                );
+            } catch (loginError: any) {
+                if (loginError?.name === "UserNotConfirmedException") {
+                    try {
+                        await resendVerificationCode(normalisedEmail);
+                        await goToVerification();
+                    } catch {
+                        setFormError(
+                            "We couldn't resend your verification code."
+                        );
+                    }
+
+                    return;
+                }
+
+                await AsyncStorage.multiRemove([
+                    "pendingVerificationEmail",
+                    "pendingNotificationPreference",
+                ]);
+
+                if (
+                    loginError?.name === "NotAuthorizedException" ||
+                    loginError?.name === "UserNotFoundException"
+                ) {
                     setFormError(
-                        "An account already exists with this email address."
+                        "An account already exists with this email. Check your password or log in."
                     );
                     return;
                 }
-            }
 
-            setFormError(getSignUpErrorMessage(error));
+                console.error("Existing account error:", loginError);
+
+                setFormError(
+                    "We couldn't continue with this account. Please try logging in."
+                );
+            }
         } finally {
             setIsLoading(false);
         }
@@ -228,7 +306,10 @@ export default function CreateAccountScreen() {
                         <TouchableOpacity
                             style={styles.checkboxRow}
                             activeOpacity={0.8}
-                            onPress={() => setNotifySavedPets(!notifySavedPets)}
+                            onPress={() => {
+                                setNotifySavedPets((current) => !current);
+                                setFormError("");
+                            }}
                         >
                             <View style={[styles.checkbox, notifySavedPets && styles.checkboxActive]}>
                                 {notifySavedPets && (
@@ -242,18 +323,23 @@ export default function CreateAccountScreen() {
                             </Text>
                         </TouchableOpacity>
 
-                        <AppButton
-                            title={isLoading ? "Creating account..." : "Create account"}
-                            onPress={handleCreateAccount}
-                            disabled={isLoading}
-                        />
-
-                        <View style={styles.loginRow}>
-                            <Text style={styles.smallText}>Already have an account? </Text>
-                            <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
-                                <Text style={styles.loginText}>Log in</Text>
-                            </TouchableOpacity>
-                        </View>
+                        {isLoading ? (
+                            <LoadingSpinner size="small" />
+                        ) : (
+                            <>
+                                <AppButton
+                                    title={isLoading ? "Creating account..." : "Create account"}
+                                    onPress={handleCreateAccount}
+                                    disabled={isLoading}
+                                />
+                                <View style={styles.loginRow}>
+                                    <Text style={styles.smallText}>Already have an account? </Text>
+                                    <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+                                        <Text style={styles.loginText}>Log in</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        )}
                     </Card>
                 </View>
             </View>

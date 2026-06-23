@@ -6,6 +6,7 @@ import { routes } from "../../src/constants/routes";
 import { useLocalSearchParams, router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { verifyEmail, resendVerificationCode } from "../../src/services/auth/authService";
+import { savePendingNotificationPreference } from "../../src/services/user/notificationPreferenceService";
 
 import Screen from "../../src/components/layout/Screen"
 import AppButton from "../../src/components/ui/AppButton"
@@ -15,26 +16,97 @@ import BackButton from "../../src/components/ui/BackButton";
 import AuthProgressStepper from "../../src/components/ui/auth/AuthProgressStepper";
 import VerificationCodeInput from "../../src/components/ui/auth/VerificationCodeInput";
 import { theme } from "../../src/constants/theme";
+import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 
 export default function VerifyEmailScreen() {
     const [verificationCode, setVerificationCode] = useState("");
     const { email } = useLocalSearchParams<{ email: string }>();
+
     const [formError, setFormError] = useState("");
+    const [loginLoading, setLoginLoading] = useState(false);
 
     async function handleVerifyEmail() {
+        if (loginLoading) return;
+
+        const code = verificationCode.trim();
+        const normalisedEmail = email.trim().toLowerCase();
+
+        if (code.length !== 6) {
+            setFormError("Please enter the 6-digit verification code.");
+            return;
+        }
+
         try {
-            const result = await verifyEmail(email, verificationCode);
+            setLoginLoading(true);
+            setFormError("");
 
-            if (result.isSignUpComplete) {
-                await AsyncStorage.removeItem("pendingVerificationEmail");
+            const result = await verifyEmail(
+                normalisedEmail,
+                code
+            );
 
-                router.replace({
-                    pathname: routes.onboarding.lifestyle,
-                    params: { accountCreated: "true" },
-                });
+            if (!result.isSignUpComplete) {
+                setFormError(
+                    "Email verification could not be completed."
+                );
+                return;
             }
-        } catch (error) {
-            setFormError("The verification code is incorrect or has expired.");
+
+            await AsyncStorage.removeItem(
+                "pendingVerificationEmail"
+            );
+
+            try {
+                await savePendingNotificationPreference(
+                    normalisedEmail
+                );
+            } catch (error) {
+                // Do not block onboarding because an optional preference failed.
+                console.error(
+                    "Pending notification preference failed:",
+                    error
+                );
+            }
+
+            router.replace(routes.onboarding.lifestyle);
+        } catch (error: any) {
+            console.error("Verification error:", error);
+
+            if (error?.name === "CodeMismatchException") {
+                setFormError("The verification code is incorrect.");
+                return;
+            }
+
+            if (error?.name === "ExpiredCodeException") {
+                setFormError(
+                    "The verification code has expired. Please request another."
+                );
+                return;
+            }
+
+            if (
+                error?.name ===
+                "UserAlreadyAuthenticatedException"
+            ) {
+                setFormError(
+                    "Another account is currently signed in. Please sign out and try again."
+                );
+                return;
+            }
+
+            if (error?.message === "A different account is already signed in.") {
+                setFormError(
+                    "Another account is currently signed in. Please sign out and try again."
+                );
+                return;
+            }
+
+            setFormError(
+                error?.message ||
+                "We couldn't verify your email. Please try again."
+            );
+        } finally {
+            setLoginLoading(false);
         }
     }
 
@@ -64,6 +136,7 @@ export default function VerifyEmailScreen() {
 
             <View style={styles.cardLayer}>
 
+
                 <View style={styles.cardWrapper}>
                     <Card>
 
@@ -74,7 +147,7 @@ export default function VerifyEmailScreen() {
                                 <Text style={styles.title}>Verify your email</Text>
                                 <Text style={styles.subtitle}>
                                     We’ve sent you a 6-digit verification code{"\n"}to
-                                    <Text style={styles.boldText}> harry@example.com</Text>{"\n"} {/* Will get the user's entered email */}
+                                    <Text style={styles.boldText}> {email}</Text>{"\n"} {/* Will get the user's entered email */}
                                     Please enter the code below.
                                 </Text>
                             </View>
@@ -100,22 +173,27 @@ export default function VerifyEmailScreen() {
                             onChangeText={setVerificationCode}
                         />
 
+                        {loginLoading ? (
+                            <LoadingSpinner size="small" />
+                        ) : (
+                            <>
+                                <AppButton title="Verify Email" onPress={handleVerifyEmail} />
 
-                        <AppButton title="Verify Email" onPress={handleVerifyEmail} />
+                                <View style={styles.helperContainer}>
+                                    <Text style={styles.smallText}>
+                                        Didn't receive an email?
+                                    </Text>
+                                    <View style={styles.helperRow}>
+                                        <Text style={styles.smallText}>Check your spam or </Text>
 
-                        <View style={styles.helperContainer}>
-                            <Text style={styles.smallText}>
-                                Didn't receive an email?
-                            </Text>
+                                        <TouchableOpacity onPress={handleResendCode}>
+                                            <Text style={styles.loginText}>resend the code</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            </>
+                        )}
 
-                            <View style={styles.helperRow}>
-                                <Text style={styles.smallText}>Check your spam or </Text>
-
-                                <TouchableOpacity onPress={handleResendCode}>
-                                    <Text style={styles.loginText}>resend the code</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
                     </Card>
                 </View>
             </View>

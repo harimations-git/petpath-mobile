@@ -1,4 +1,4 @@
-import { signIn, signUp, fetchAuthSession, getCurrentUser, resendSignUpCode, confirmSignUp } from "aws-amplify/auth";
+import { signIn, signUp, fetchAuthSession, getCurrentUser, resendSignUpCode, confirmSignUp, signOut, resetPassword, confirmResetPassword, autoSignIn } from "aws-amplify/auth";
 
 export async function loginUser(email: string, password: string) {
     const result = await signIn({
@@ -36,7 +36,8 @@ export async function registerUser(
             userAttributes: {
                 email: normalisedEmail,
                 name: fullName.trim()
-            }
+            },
+            autoSignIn: true,
         }
     });
 }
@@ -57,15 +58,55 @@ export function getSignUpErrorMessage(error: unknown) {
     }
 }
 
-export async function verifyEmail(email: string, code: string) {
-    return confirmSignUp({
+export async function verifyEmail(
+    email: string,
+    verificationCode: string
+) {
+    const result = await confirmSignUp({
         username: email.trim().toLowerCase(),
-        confirmationCode: code.trim(),
+        confirmationCode: verificationCode.trim(),
     });
+
+    if (
+        result.nextStep.signUpStep ===
+        "COMPLETE_AUTO_SIGN_IN"
+    ) {
+        const signInResult = await autoSignIn();
+
+        if (!signInResult.isSignedIn) {
+            throw new Error(
+                "Account verified, but automatic sign-in failed."
+            );
+        }
+    }
+
+    return result;
 }
 
 export async function resendVerificationCode(email: string) {
     return resendSignUpCode({
         username: email.trim().toLowerCase(),
+    });
+}
+
+export async function logoutUser() {
+    await signOut();
+}
+
+export async function requestPasswordReset(email: string) {
+    return resetPassword({
+        username: email.trim().toLowerCase(),
+    });
+}
+
+export async function completePasswordReset(
+    email: string,
+    code: string,
+    newPassword: string
+) {
+    await confirmResetPassword({
+        username: email.trim().toLowerCase(),
+        confirmationCode: code.trim(),
+        newPassword,
     });
 }

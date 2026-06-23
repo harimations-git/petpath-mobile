@@ -8,14 +8,13 @@ export const routes = {
     createAccount: "/(auth)/create-account",
     verifyEmail: "/(auth)/verify-email",
     forgotPassword: "/(auth)/forgot-password",
-
   },
   onboarding: {
     lifestyle: "/(onboarding)/lifestyle-questionnaire",
     location: "/(onboarding)/location-permission",
   },
   tabs: {
-    home: "/(tabs)",
+    home: "/(tabs)/home",
     matches: "/(tabs)/matches",
     savedPets: "/(tabs)/saved-pets",
     learn: "/(tabs)/learn",
