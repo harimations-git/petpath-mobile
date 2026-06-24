@@ -6,6 +6,8 @@ import Screen from "../../src/components/layout/Screen"
 import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
 import Logo from "../../src/components/ui/Logo"
 import { theme } from "../../src/constants/theme";
+import PetHeroImage from "../../src/components/ui/PetHeroImage";
+
 
 
 export default function LoginScreen() {
@@ -16,20 +18,15 @@ export default function LoginScreen() {
             <Logo hasTagline={true} />
 
             <View style={styles.hero}>
-                <View style={styles.heroText}>
-                    <Text style={styles.title}>Home</Text>
-                    <Text style={styles.subtitle}>
-                        Thats why he is the G.O.A.T
-                    </Text>
-                </View>
-
-                <View style={styles.petCircle}>
-                    <Ionicons name="paw" size={76} color={theme.colors.primary} />
-                    <Text style={styles.subtitle}>
-                        Placeholder
-                    </Text>
-                </View>
-            </View>
+                            <View style={styles.heroText}>
+                                <Text style={styles.title}>Welcome Back</Text>
+                                <Text style={styles.subtitle}>
+                                    Continue discovering adoptable pets matched to your home, lifestyle and experience.
+                                </Text>
+                            </View>
+            
+                            <PetHeroImage width={200} height={200} top={-30} right={-40} />
+                        </View>
 
             <View style={styles.page}>
                 <DecorativeLeaf
@@ -64,25 +61,31 @@ const styles = StyleSheet.create({
     },
 
     hero: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: theme.spacing.xl,
+        position: "relative",
+        minHeight: 175,
+        justifyContent: "center",
+        overflow: "visible",
+        marginTop: theme.spacing.md,
     },
+
     heroText: {
-        flex: 1,
-        marginLeft: 10
+        width: "58%",
+        zIndex: 2,
+        marginTop: -30,
     },
+
     title: {
-        fontSize: 24,
+        fontSize: 28,
+        lineHeight: 34,
         fontWeight: "900",
         color: theme.colors.primaryDark,
-        marginBottom: theme.spacing.xs,
     },
+
     subtitle: {
-        fontSize: 15,
+        marginTop: 6,
+        fontSize: 13,
+        lineHeight: 18,
         color: theme.colors.text,
-        lineHeight: 22,
-        width: "90%",
     },
     petCircle: {
         width: 138,
