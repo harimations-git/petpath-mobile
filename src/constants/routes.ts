@@ -5,6 +5,7 @@ export const routes = {
   },
   auth: {
     login: "/(auth)/login",
+    accountType: "/(auth)/account-type",
     createAccount: "/(auth)/create-account",
     verifyEmail: "/(auth)/verify-email",
     forgotPassword: "/(auth)/forgot-password",
