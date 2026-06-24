@@ -12,6 +12,7 @@ import NoticeMessage from "../../src/components/ui/NoticeMessage";
 import Spacer from "../../src/components/layout/Spacer";
 import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 import { theme } from "../../src/constants/theme";
+import PetHeroImage from "../../src/components/ui/PetHeroImage";
 
 import { router, useLocalSearchParams } from "expo-router";
 import { routes } from "../../src/constants/routes";
@@ -151,15 +152,13 @@ export default function LoginScreen() {
                     </Text>
                 </View>
 
-                <View style={styles.petCircle}>
-                    <Ionicons name="paw" size={76} color={theme.colors.primary} />
-                    <Text style={styles.subtitle}>
-                        Placeholder
-                    </Text>
-                </View>
+                <PetHeroImage width={200} height={200} top={-30} right={-40} />
             </View>
 
+
+
             <View style={styles.cardLayer}>
+
                 <DecorativeLeaf
                     width={100}
                     height={100}
@@ -337,25 +336,31 @@ const styles = StyleSheet.create({
         marginTop: -2,
     },
     hero: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: theme.spacing.xl,
+        position: "relative",
+        minHeight: 175,
+        justifyContent: "center",
+        overflow: "visible",
+        marginTop: theme.spacing.md,
     },
+
     heroText: {
-        flex: 1,
-        marginLeft: 10
+        width: "58%",
+        zIndex: 2,
+        marginTop: -30,
     },
+
     title: {
-        fontSize: 24,
+        fontSize: 28,
+        lineHeight: 34,
         fontWeight: "900",
         color: theme.colors.primaryDark,
-        marginBottom: theme.spacing.xs,
     },
+
     subtitle: {
-        fontSize: 15,
+        marginTop: 6,
+        fontSize: 13,
+        lineHeight: 18,
         color: theme.colors.text,
-        lineHeight: 22,
-        width: "90%",
     },
     petCircle: {
         width: 138,
