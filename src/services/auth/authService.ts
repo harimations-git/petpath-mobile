@@ -58,33 +58,23 @@ export function getSignUpErrorMessage(error: unknown) {
     }
 }
 
-export async function verifyEmail(
-    email: string,
-    verificationCode: string
-) {
+export async function verifyEmail(email: string, verificationCode: string) {
+    const normalisedEmail = email.trim().toLowerCase();
+
     const result = await confirmSignUp({
-        username: email.trim().toLowerCase(),
+        username: normalisedEmail,
         confirmationCode: verificationCode.trim(),
     });
 
-    if (
-        result.nextStep.signUpStep ===
-        "COMPLETE_AUTO_SIGN_IN"
-    ) {
-        const signInResult = await autoSignIn();
-
-        if (!signInResult.isSignedIn) {
-            throw new Error(
-                "Account verified, but automatic sign-in failed."
-            );
-        }
+    if (result.nextStep.signUpStep === "COMPLETE_AUTO_SIGN_IN") {
+        await autoSignIn();
     }
 
     return result;
 }
 
 export async function resendVerificationCode(email: string) {
-    return resendSignUpCode({
+    return await resendSignUpCode({
         username: email.trim().toLowerCase(),
     });
 }

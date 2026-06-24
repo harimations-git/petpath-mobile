@@ -9,7 +9,6 @@ import { router } from "expo-router";
 import { getCurrentUser, signOut } from "aws-amplify/auth";
 import { registerUser, resendVerificationCode, getSignUpErrorMessage, loginUser } from "../../src/services/auth/authService";
 import { validateCreateAccount } from "../../src/utils/validation/authValidation";
-import { redirectAfterLogin } from "../../src/utils/navigation/redirectAfterLogin";
 
 import Screen from "../../src/components/layout/Screen"
 import AppTextInput from "../../src/components/ui/AppTextInput"
@@ -21,6 +20,8 @@ import BackButton from "../../src/components/ui/BackButton";
 import AuthProgressStepper from "../../src/components/ui/auth/AuthProgressStepper";
 import { theme } from "../../src/constants/theme";
 import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
+import PetHeroImage from "../../src/components/ui/PetHeroImage";
+import { redirectAfterLogin } from "../../src/utils/navigation/redirectAfterLogin";
 
 export default function CreateAccountScreen() {
     const [fullName, setFullName] = useState("");
@@ -46,127 +47,129 @@ export default function CreateAccountScreen() {
     }
 
     async function handleCreateAccount() {
-        const validationError = validateCreateAccount({
-            fullName,
-            email,
-            password,
-            confirmPassword,
-            acceptedTerms,
-        });
+    const validationError = validateCreateAccount({
+        fullName,
+        email,
+        password,
+        confirmPassword,
+        acceptedTerms,
+    });
 
-        if (validationError) {
-            setFormError(validationError);
+    if (validationError) {
+        setFormError(validationError);
+        return;
+    }
+
+    const normalisedEmail = email.trim().toLowerCase();
+
+    async function storePendingRegistration() {
+        await AsyncStorage.multiSet([
+            ["pendingVerificationEmail", normalisedEmail],
+            [
+                "pendingNotificationPreference",
+                JSON.stringify({
+                    email: normalisedEmail,
+                    savedPetStatusEmailsEnabled: notifySavedPets,
+                }),
+            ],
+        ]);
+    }
+
+    async function goToVerification() {
+        await storePendingRegistration();
+
+        router.replace({
+            pathname: routes.auth.verifyEmail,
+            params: { email: normalisedEmail },
+        });
+    }
+
+    try {
+        setIsLoading(true);
+        setFormError("");
+
+        await clearExistingSession();
+
+        await registerUser(
+            fullName.trim(),
+            normalisedEmail,
+            password
+        );
+
+        await goToVerification();
+    } catch (error: any) {
+        if (error?.name !== "UsernameExistsException") {
+            await AsyncStorage.multiRemove([
+                "pendingVerificationEmail",
+                "pendingNotificationPreference",
+            ]);
+
+            setFormError(getSignUpErrorMessage(error));
             return;
         }
 
-        const normalisedEmail = email.trim().toLowerCase();
-
-        async function storePendingRegistration() {
-            await AsyncStorage.multiSet([
-                ["pendingVerificationEmail", normalisedEmail],
-                [
-                    "pendingNotificationPreference",
-                    JSON.stringify({
-                        email: normalisedEmail,
-                        savedPetStatusEmailsEnabled: notifySavedPets,
-                    }),
-                ],
-            ]);
-        }
-
-        async function goToVerification() {
-            await storePendingRegistration();
-
-            router.replace({
-                pathname: routes.auth.verifyEmail,
-                params: { email: normalisedEmail },
-            });
-        }
-
         try {
-            setIsLoading(true);
-            setFormError("");
-
             await clearExistingSession();
 
-            await registerUser(
-                fullName.trim(),
+            const loginResult = await loginUser(
                 normalisedEmail,
                 password
             );
 
-            await goToVerification();
-        } catch (error: any) {
-            if (error?.name !== "UsernameExistsException") {
-                await AsyncStorage.removeItem("pendingVerificationEmail");
-
-                setFormError(getSignUpErrorMessage(error));
-                return;
-            }
-
-            try {
-                // Prevent an existing session from blocking this login attempt.
-                try {
-                    await getCurrentUser();
-                    await signOut();
-                } catch {
-                    // There was no active session.
-                }
-
-                const loginResult = await loginUser(
-                    normalisedEmail,
-                    password
-                );
-
-                if (loginResult.isSignedIn) {
-                    await AsyncStorage.removeItem("pendingVerificationEmail");
-
-                    await redirectAfterLogin();
-                    return;
-                }
-
-                setFormError(
-                    "This account requires another sign-in step."
-                );
-            } catch (loginError: any) {
-                if (loginError?.name === "UserNotConfirmedException") {
-                    try {
-                        await resendVerificationCode(normalisedEmail);
-                        await goToVerification();
-                    } catch {
-                        setFormError(
-                            "We couldn't resend your verification code."
-                        );
-                    }
-
-                    return;
-                }
+            if (loginResult.isSignedIn) {
+                await signOut();
 
                 await AsyncStorage.multiRemove([
                     "pendingVerificationEmail",
                     "pendingNotificationPreference",
                 ]);
 
-                if (
-                    loginError?.name === "NotAuthorizedException" ||
-                    loginError?.name === "UserNotFoundException"
-                ) {
+                setFormError(
+                    "You already have an account. Please log in instead."
+                );
+                return;
+            }
+
+            await AsyncStorage.multiRemove([
+                "pendingVerificationEmail",
+                "pendingNotificationPreference",
+            ]);
+
+            setFormError(
+                "You already have an account. Please log in instead."
+            );
+        } catch (loginError: any) {
+            if (loginError?.name === "UserNotConfirmedException") {
+                try {
+                    await resendVerificationCode(normalisedEmail);
+                    await goToVerification();
+                    return;
+                } catch {
+                    await AsyncStorage.multiRemove([
+                        "pendingVerificationEmail",
+                        "pendingNotificationPreference",
+                    ]);
+
                     setFormError(
-                        "An account already exists with this email. Check your password or log in."
+                        "We couldn't resend your verification code. Please try again."
                     );
                     return;
                 }
-
-                console.error("Existing account error:", loginError);
-
-                setFormError(
-                    "We couldn't continue with this account. Please try logging in."
-                );
             }
-        } finally {
-            setIsLoading(false);
+
+            await AsyncStorage.multiRemove([
+                "pendingVerificationEmail",
+                "pendingNotificationPreference",
+            ]);
+
+            setFormError(
+                "You already have an account. Please log in instead."
+            );
         }
+    } finally {
+        setIsLoading(false);
     }
+}
 
     function handleTermsOfService() {
         router.push(routes.legal.tos)
@@ -201,9 +204,7 @@ export default function CreateAccountScreen() {
                     </Text>
                 </View>
 
-                <View style={styles.petIllustration}>
-                    <Ionicons name="paw" size={70} color={theme.colors.primary} />
-                </View>
+                <PetHeroImage width={200} height={200} top={-30} right={-40} />
             </View>
 
             <View style={styles.cardLayer}>
@@ -371,24 +372,30 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     hero: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: theme.spacing.sm,
+        position: "relative",
+        minHeight: 175,
+        justifyContent: "center",
+        overflow: "visible",
+        marginTop: theme.spacing.md,
     },
+
     heroText: {
-        flex: 1,
-        marginLeft: 10
+        width: "58%",
+        zIndex: 2,
+        marginTop: -30,
     },
+
     title: {
         fontSize: 28,
         lineHeight: 34,
         fontWeight: "900",
         color: theme.colors.primaryDark,
-        marginBottom: theme.spacing.sm,
     },
+
     subtitle: {
-        fontSize: 14,
-        lineHeight: 19,
+        marginTop: 6,
+        fontSize: 13,
+        lineHeight: 18,
         color: theme.colors.text,
     },
     petIllustration: {
@@ -452,12 +459,13 @@ const styles = StyleSheet.create({
     },
     cardLayer: {
         position: "relative",
+        marginBottom: 60
     },
 
     cardWrapper: {
-        position: "relative",
         zIndex: 2,
         elevation: 2,
+        marginTop: -20
     },
     errorText: {
         color: theme.colors.error,
