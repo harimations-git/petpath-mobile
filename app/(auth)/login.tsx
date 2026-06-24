@@ -126,7 +126,7 @@ export default function LoginScreen() {
     }
 
     function handleCreateNewAccount() {
-        router.push(routes.auth.createAccount)
+        router.push(routes.auth.accountType)
     }
 
     function handleForgetPassword() {

@@ -219,10 +219,11 @@ export default function CreateAccountScreen() {
                     opacity={1}
                     zIndex={0}
                 />
+                
                 <DecorativeLeaf
                     width={140}
                     height={140}
-                top={-235}
+                    top={-235}
                     left={-65}
                     rotate={150}
                     opacity={1}
