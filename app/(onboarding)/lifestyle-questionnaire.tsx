@@ -18,7 +18,7 @@ import PillDropdown from "../../src/components/ui/PillDropdown";
 import InfoModal from "../../src/components/ui/infoModal";
 import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 
-export default function CreateAccountScreen() {
+export default function LifestyleQuestionnaireScreen() {
     const [homeType, setHomeType] = useState("");
     const [outdoorSpace, setOutdoorSpace] = useState("");
     const [activityLevel, setActivityLevel] = useState("");
@@ -246,7 +246,7 @@ export default function CreateAccountScreen() {
                 }
                 buttonText="Got it"
                 iconName="leaf-outline"
-                onClose={() => {
+                onConfirm={() => {
                     setInfoModalVisible(false);
                     router.replace(routes.onboarding.location);
                 }}

@@ -8,7 +8,7 @@ import Logo from "../../src/components/ui/Logo"
 import { theme } from "../../src/constants/theme";
 
 
-export default function LoginScreen() {
+export default function SavedPetsScreen() {
 
 
     return (

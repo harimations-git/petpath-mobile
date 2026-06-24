@@ -29,7 +29,7 @@ type LocationAccess =
         approximate: true;
     };
 
-export default function CreateAccountScreen() {
+export default function LocationPermissionScreen() {
 
     const [locationAccess, setLocationAccess] = useState<LocationAccess>({
         status: "",
@@ -190,7 +190,7 @@ export default function CreateAccountScreen() {
                 message="Your preferences have been saved. You can update them anytime in Settings."
                 buttonText="Start exploring"
                 iconName="leaf-outline"
-                onClose={() => {
+                onConfirm={() => {
                     setInfoModalVisible(false);
                     router.replace(routes.tabs.home);
                 }}

@@ -1,22 +1,16 @@
-import React from "react";
-import {
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import { Modal, View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../constants/theme";
-import AppButton from "./AppButton";
 
 type InfoModalProps = {
     visible: boolean;
     title: string;
-    message: string;
+    message?: string;
     buttonText?: string;
+    buttonTextSecondary?: string;
     iconName?: keyof typeof Ionicons.glyphMap;
-    onClose: () => void;
+    onConfirm?: () => void;
+    onClose?: () => void;
 };
 
 export default function InfoModal({
@@ -24,80 +18,151 @@ export default function InfoModal({
     title,
     message,
     buttonText = "Continue",
-    iconName = "heart-outline",
+    buttonTextSecondary,
+    iconName = "information-circle-outline",
+    onConfirm,
     onClose,
 }: InfoModalProps) {
     return (
-        <Modal visible={visible} transparent animationType="fade">
-            <Pressable style={styles.overlay} onPress={onClose}>
-                <Pressable style={styles.modalCard}>
+        <Modal
+            visible={visible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => onClose?.()}
+        >
+            <View style={styles.backdrop}>
+                <View style={styles.modal}>
                     <View style={styles.iconCircle}>
-                        <Ionicons name={iconName} size={34} color={theme.colors.primaryDark} />
+                        <Ionicons
+                            name={iconName}
+                            size={30}
+                            color={theme.colors.primaryDark}
+                        />
                     </View>
 
                     <Text style={styles.title}>{title}</Text>
 
                     <Text style={styles.message}>{message}</Text>
 
-                    <AppButton title={buttonText} onPress={onClose} style={styles.button} />
-                </Pressable>
-            </Pressable>
+                    <View style={styles.buttonRow}>
+                        {buttonTextSecondary ? (
+                            <TouchableOpacity
+                                style={[styles.button, styles.secondaryButton]}
+                                activeOpacity={0.85}
+                                onPress={() => onClose?.()}
+                            >
+                                <Text style={styles.secondaryButtonText}>
+                                    {buttonTextSecondary}
+                                </Text>
+
+                            </TouchableOpacity>
+                        ) : (
+                            null
+                        )}
+
+                        <TouchableOpacity
+                            style={[styles.button, styles.primaryButton]}
+                            activeOpacity={0.85}
+                            onPress={() => onConfirm?.()}
+                        >
+                            <View style={styles.primaryButtonContent}>
+                                <Text style={styles.primaryButtonText}>
+                                    {buttonText}
+                                </Text>
+                            </View>
+
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
         </Modal>
     );
 }
 
 const styles = StyleSheet.create({
-    overlay: {
+    backdrop: {
         flex: 1,
-        backgroundColor: "rgba(18, 60, 43, 0.35)",
+        backgroundColor: "rgba(0, 0, 0, 0.35)",
+        alignItems: "center",
         justifyContent: "center",
-        alignItems: "center",
         paddingHorizontal: theme.spacing.lg,
     },
-    modalCard: {
-        width: "100%",
-        backgroundColor: theme.colors.card,
-        borderRadius: 32,
-        paddingHorizontal: theme.spacing.lg,
-        paddingTop: theme.spacing.xl,
-        paddingBottom: theme.spacing.lg,
-        alignItems: "center",
 
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.18,
-        shadowRadius: 14,
-        elevation: 8,
+    modal: {
+        width: "100%",
+        borderRadius: 22,
+        backgroundColor: theme.colors.background,
+        padding: theme.spacing.xl,
+        alignItems: "center",
     },
+
     iconCircle: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
+        width: 62,
+        height: 62,
+        borderRadius: 31,
         backgroundColor: theme.colors.paleGreen,
         alignItems: "center",
         justifyContent: "center",
         marginBottom: theme.spacing.md,
     },
+
     title: {
-        fontSize: 21,
-        lineHeight: 29,
+        fontSize: 22,
         fontWeight: "900",
         color: theme.colors.primaryDark,
         textAlign: "center",
         marginBottom: theme.spacing.sm,
-        paddingHorizontal: theme.spacing.sm,
     },
+
     message: {
         fontSize: 14,
         lineHeight: 21,
         color: theme.colors.text,
         textAlign: "center",
-        marginHorizontal: theme.spacing.md,
         marginBottom: theme.spacing.lg,
-        opacity: 0.9,
     },
-    button: {
-        marginTop: 0,
+
+    buttonRow: {
         width: "100%",
+        flexDirection: "row",
+        gap: theme.spacing.sm,
+    },
+
+    button: {
+        flex: 1,
+        minHeight: 48,
+        borderRadius: 24,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    primaryButton: {
+        backgroundColor: theme.colors.primaryDark,
+    },
+
+    secondaryButton: {
+        backgroundColor: theme.colors.background,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+    },
+
+    primaryButtonContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        width: "100%",
+        position: "relative",
+        justifyContent: "center",
+    },
+
+    primaryButtonText: {
+        color: theme.colors.paleGreen,
+        fontSize: 15,
+        fontWeight: "800",
+    },
+
+    secondaryButtonText: {
+        color: theme.colors.primaryDark,
+        fontSize: 14,
+        fontWeight: "800",
     },
 });

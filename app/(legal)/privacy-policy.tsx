@@ -16,15 +16,12 @@ export default function PrivacyPolicyScreen() {
             scrollable={true}
             contentContainerStyle={styles.verificationContent}
         >
+            <Spacer height={30}/>
             <View style={styles.header}>
                 <View style={styles.backButtonWrapper}>
                     <BackButton />
                 </View>
-
-                <View style={styles.logoWrapper}>
-                    <Logo hasTagline={true} />
-                </View>
-            </View>
+            
 
             <View style={styles.hero}>
                 <View style={styles.heroText}>
@@ -34,14 +31,15 @@ export default function PrivacyPolicyScreen() {
                     </Text>
                 </View>
             </View>
+            </View>
 
             <View style={styles.cardLayer}>
                 <DecorativeLeaf
                     width={140}
                     height={140}
-                    bottom={-45}
-                    left={-45}
-                    rotate={90}
+                    bottom={-180}
+                    left={10}
+                    rotate={0}
                     opacity={1}
                     zIndex={0}
                 />
@@ -49,10 +47,33 @@ export default function PrivacyPolicyScreen() {
                 <DecorativeLeaf
                     width={140}
                     height={140}
-                    bottom={-45}
-                    right={-45}
-                    rotate={-90}
+                    top={-160}
+                    left={-65}
+                    rotate={150}
+                    opacity={1}
+                    zIndex={0}
+                />
+
+                <DecorativeLeaf
+                    width={140}
+                    height={140}
+                    top={-80}
+                    right={-75}
+                    rotate={150}
+                    flipY
                     flipX
+                    opacity={1}
+                    zIndex={0}
+                />
+
+                <DecorativeLeaf
+                    width={140}
+                    height={140}
+                    bottom={-150}
+                    right={20}
+                    rotate={50}
+                    flipY
+                    flipX   
                     opacity={1}
                     zIndex={0}
                 />
@@ -208,11 +229,12 @@ const styles = StyleSheet.create({
     },
 
     termsScroll: {
-        maxHeight: 430,
+        maxHeight: 590,
     },
 
     termsScrollContent: {
-        paddingBottom: theme.spacing.sm,
+        paddingTop: theme.spacing.md,
+        paddingBottom: theme.spacing.md,
     },
 
     section: {

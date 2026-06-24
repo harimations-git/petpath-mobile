@@ -1,45 +1,67 @@
-import React, { useState } from "react";
-import {StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { routes } from "../../src/constants/routes";
+
 import Screen from "../../src/components/layout/Screen"
 import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
 import Logo from "../../src/components/ui/Logo"
 import { theme } from "../../src/constants/theme";
+import Card from "../../src/components/ui/Card";
+import Spacer from "../../src/components/layout/Spacer";
+import AppButtonProps from "../../src/components/ui/AppButton";
+import InfoModal from "../../src/components/ui/infoModal";
+import { Ionicons } from "@expo/vector-icons";
+import DistanceSlider from "../../src/components/ui/DistanceSlider";
+
+import { getCurrentUserProfile } from "../../src/services/user/userService";
 
 
-export default function LoginScreen() {
+export default function Settings() {
 
+    const [distance, setDistance] = useState(5)
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+    const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+    const [infoModalVisible, setInfoModalVisible] = useState(false);
+
+    type UserProfile = {
+        fullName?: string;
+        email?: string;
+    };
+
+    useEffect(() => {
+        async function loadCurrentUser() {
+            try {
+                const profile = await getCurrentUserProfile();
+                setUserProfile(profile);
+            } catch (error) {
+                console.log("Could not load current user profile:", error);
+            } finally {
+                setIsLoadingProfile(false);
+            }
+        }
+        loadCurrentUser();
+    }, []);
+
+    function handleSaveDistance(){
+        Alert.alert("WIP")
+    }
 
     return (
-        <Screen>
+        <Screen scrollable>
             <Logo hasTagline={true} />
 
-            <View style={styles.hero}>
-                <View style={styles.heroText}>
-                    <Text style={styles.title}>Settings</Text>
-                    <Text style={styles.subtitle}>
-                        Thats why he is the G.O.A.T
-                    </Text>
-                </View>
-
-                <View style={styles.petCircle}>
-                    <Ionicons name="paw" size={76} color={theme.colors.primary} />
-                    <Text style={styles.subtitle}>
-                        Placeholder
-                    </Text>
-                </View>
-            </View>
-
-            <View style={styles.page}>
+            <View style={styles.cardLayer}>
                 <DecorativeLeaf
-                    width={100}
-                    height={100}
-                    bottom={-40}
-                    left={-25}
-                    rotate={90}
+                    width={140}
+                    height={140}
+                    top={-160}
+                    left={-65}
+                    rotate={150}
                     opacity={1}
-                    zIndex={-1}
+                    zIndex={0}
                 />
 
                 <DecorativeLeaf
@@ -52,7 +74,136 @@ export default function LoginScreen() {
                     opacity={1}
                     zIndex={-1}
                 />
+
+                <View style={styles.cardWrapper}>
+                    <Card>
+
+                        <TouchableOpacity
+                            style={styles.accountSummary}
+                            activeOpacity={0.85}
+                            onPress={() => router.push("/settings/account")}
+                        >
+                            <View style={styles.accountIcon}>
+                                <Ionicons name="person-outline" size={24} color={theme.colors.primaryDark} />
+                            </View>
+
+                            <View style={styles.accountText}>
+                                <Text style={styles.accountName}>{userProfile?.fullName || "Username"}</Text>
+                                <Text style={styles.accountEmail}>{userProfile?.email || "Username@email.com"}</Text>
+                                <Text style={styles.viewMore}>View account details</Text>
+                            </View>
+
+                            <Ionicons name="chevron-forward" size={22} color={theme.colors.primaryDark} />
+                        </TouchableOpacity>
+
+                        <View style={styles.sectionGap}>
+                            <Text style={styles.sectionTitle}>Matching settings</Text>
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.settingsRow}
+                            activeOpacity={0.85}
+                            onPress={() => router.push(routes.onboarding.lifestyle)}
+                        >
+                            <Ionicons name="home-outline" size={22} color={theme.colors.primaryDark} />
+                            <View style={styles.rowText}>
+                                <Text style={styles.rowTitle}>Lifestyle questionnaire</Text>
+                                <Text style={styles.rowDescription}>Update your answers anytime.</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={theme.colors.primaryDark} />
+                        </TouchableOpacity>
+
+                        <View style={styles.distanceBox}>
+                            <View style={styles.distanceHeader}>
+                                <View>
+                                    <Text style={styles.rowTitle}>Search distance</Text>
+                                    <Text style={styles.rowDescription}>Choose how far PetPath should search.</Text>
+                                </View>
+
+                            </View>
+                            <Spacer height={20} />
+                            <DistanceSlider
+                                value={distance}
+                                onChange={setDistance}
+                                min={5}
+                                max={100}
+                                step={1}
+                                unit="miles"
+                                labels={["5 miles", "25 miles", "100 miles"]}
+                                caption={(value) => `Within ${value} miles`}
+                            />
+
+                            <TouchableOpacity
+                                style={[styles.button, styles.primaryButton]}
+                                activeOpacity={0.85}
+                                onPress={handleSaveDistance}
+                            >
+                                <View style={styles.primaryButtonContent}>
+                                    <Text style={styles.primaryButtonText}>
+                                        Save
+                                    </Text>
+                                </View>
+
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.sectionGap}>
+                            <Text style={styles.sectionTitle}>More info and support</Text>
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.settingsRow}
+                            activeOpacity={0.85}
+                            onPress={() => router.push(routes.legal.tos)}
+                        >
+                            <Ionicons name="document-text-outline" size={22} color={theme.colors.primaryDark} />
+                            <View style={styles.rowText}>
+                                <Text style={styles.rowTitle}>Terms of Service</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={theme.colors.primaryDark} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.settingsRow}
+                            activeOpacity={0.85}
+                            onPress={() => router.push(routes.legal.privacyPolicy)}
+                        >
+                            <Ionicons name="shield-checkmark-outline" size={22} color={theme.colors.primaryDark} />
+                            <View style={styles.rowText}>
+                                <Text style={styles.rowTitle}>Privacy Policy</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={theme.colors.primaryDark} />
+                        </TouchableOpacity>
+
+                        <View style={styles.supportDetails}>
+                            <Text style={styles.support}>For customer support please email:</Text>
+                            <Text style={styles.supportEmail}>petpathsupport@gmail.com</Text>
+                        </View>
+
+
+                        <View style={styles.logoutWrapper}>
+                            <AppButtonProps
+                                title="Log Out"
+                                onPress={() => setInfoModalVisible(true)}
+                            />
+                        </View>
+                    </Card>
+
+                    <Spacer height={40} />
+
+                </View>
             </View>
+
+            <InfoModal
+                visible={infoModalVisible}
+                title="Log out?"
+                message="Are you sure you want to log out?"
+                buttonText="Continue"
+                buttonTextSecondary="Cancel"
+                iconName="leaf-outline"
+                onConfirm={() => router.push("/settings")}
+                onClose={() => setInfoModalVisible(false)}
+            />
         </Screen>
     );
 }
@@ -78,19 +229,202 @@ const styles = StyleSheet.create({
         color: theme.colors.primaryDark,
         marginBottom: theme.spacing.xs,
     },
-    subtitle: {
-        fontSize: 15,
-        color: theme.colors.text,
-        lineHeight: 22,
-        width: "90%",
+    cardLayer: {
+        position: "relative",
     },
-    petCircle: {
-        width: 138,
-        height: 138,
-        borderRadius: 69,
+    cardWrapper: {
+        position: "relative",
+        zIndex: 2,
+        elevation: 2,
+    },
+    optionGap: {
+        width: "100%",
+        marginVertical: theme.spacing.md,
+    },
+
+    optionGapLine: {
+        height: 1,
+        width: "100%",
+        backgroundColor: theme.colors.border,
+    },
+
+    optionGapText: {
+        alignSelf: "flex-start",
+        marginTop: 6,
+        fontSize: 12,
+        fontWeight: "700",
+        color: theme.colors.text,
+        textTransform: "uppercase",
+    },
+    pageTitle: {
+        fontSize: 24,
+        fontWeight: "900",
+        color: theme.colors.primaryDark,
+        marginBottom: theme.spacing.lg,
+    },
+
+    accountSummary: {
+        flexDirection: "row",
+        alignItems: "center",
+        padding: theme.spacing.md,
+        borderRadius: 18,
         backgroundColor: theme.colors.paleGreen,
+        marginBottom: theme.spacing.lg,
+    },
+
+    accountIcon: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: theme.colors.background,
+        marginRight: theme.spacing.md,
+    },
+
+    accountText: {
+        flex: 1,
+    },
+
+    accountName: {
+        fontSize: 17,
+        fontWeight: "900",
+        color: theme.colors.primaryDark,
+    },
+
+    accountEmail: {
+        marginTop: 2,
+        fontSize: 13,
+        color: theme.colors.text,
+    },
+
+    viewMore: {
+        marginTop: 6,
+        fontSize: 12,
+        fontWeight: "800",
+        color: theme.colors.primaryDark,
+    },
+
+    sectionGap: {
+        marginTop: theme.spacing.sm,
+        marginBottom: theme.spacing.sm,
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border,
+        paddingTop: theme.spacing.sm,
+    },
+
+    sectionTitle: {
+        fontSize: 12,
+        fontWeight: "800",
+        color: theme.colors.text,
+        textTransform: "uppercase",
+    },
+
+    settingsRow: {
+        minHeight: 64,
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: theme.spacing.sm,
+    },
+
+    rowText: {
+        flex: 1,
+        marginLeft: theme.spacing.md,
+    },
+
+    rowTitle: {
+        fontSize: 15,
+        fontWeight: "900",
+        color: theme.colors.primaryDark,
+    },
+
+    rowDescription: {
+        marginTop: 3,
+        fontSize: 12,
+        lineHeight: 17,
+        color: theme.colors.text,
+    },
+
+    distanceBox: {
+        padding: theme.spacing.md,
+        borderRadius: 18,
+        backgroundColor: theme.colors.background,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        marginTop: theme.spacing.sm,
+        marginBottom: theme.spacing.md,
+    },
+
+    distanceHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: theme.spacing.md,
+    },
+
+    sliderThumb: {
+        position: "absolute",
+        left: "52%",
+        top: -6,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: theme.colors.primaryDark,
+    },
+
+    button: {
+        flex: 1,
+        minHeight: 48,
+        borderRadius: 24,
         alignItems: "center",
         justifyContent: "center",
     },
 
+    primaryButton: {
+        backgroundColor: theme.colors.paleGreen,
+    },
+
+    primaryButtonContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        width: "18%",
+        justifyContent: "center",
+    },
+
+    primaryButtonText: {
+        color: theme.colors.primaryDark,
+        fontSize: 15,
+        fontWeight: "800",
+    },
+
+    supportDetails: {
+        marginTop: 3,
+        fontSize: 14,
+        fontWeight: 900,
+        lineHeight: 17,
+        color: theme.colors.primaryDark,
+    },
+
+    support: {
+        marginTop: 3,
+        fontSize: 14,
+        lineHeight: 17,
+        color: theme.colors.text,
+    },
+
+    supportEmail: {
+        marginTop: 3,
+        fontSize: 14,
+        fontWeight: 900,
+        lineHeight: 17,
+        color: theme.colors.primaryDark,
+    },
+    saveButton: {
+        minHeight: 23,
+        height: 20,
+        fontSize: 12
+    },
+
+    logoutWrapper: {
+        marginTop: theme.spacing.lg,
+    },
 });

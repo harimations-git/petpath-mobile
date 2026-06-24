@@ -20,8 +20,6 @@ import BackButton from "../../src/components/ui/BackButton";
 import AuthProgressStepper from "../../src/components/ui/auth/AuthProgressStepper";
 import { theme } from "../../src/constants/theme";
 import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
-import PetHeroImage from "../../src/components/ui/PetHeroImage";
-import { redirectAfterLogin } from "../../src/utils/navigation/redirectAfterLogin";
 
 export default function CreateAccountScreen() {
     const [fullName, setFullName] = useState("");
