@@ -47,77 +47,88 @@ export default function CreateAccountScreen() {
     }
 
     async function handleCreateAccount() {
-    const validationError = validateCreateAccount({
-        fullName,
-        email,
-        password,
-        confirmPassword,
-        acceptedTerms,
-    });
-
-    if (validationError) {
-        setFormError(validationError);
-        return;
-    }
-
-    const normalisedEmail = email.trim().toLowerCase();
-
-    async function storePendingRegistration() {
-        await AsyncStorage.multiSet([
-            ["pendingVerificationEmail", normalisedEmail],
-            [
-                "pendingNotificationPreference",
-                JSON.stringify({
-                    email: normalisedEmail,
-                    savedPetStatusEmailsEnabled: notifySavedPets,
-                }),
-            ],
-        ]);
-    }
-
-    async function goToVerification() {
-        await storePendingRegistration();
-
-        router.replace({
-            pathname: routes.auth.verifyEmail,
-            params: { email: normalisedEmail },
+        const validationError = validateCreateAccount({
+            fullName,
+            email,
+            password,
+            confirmPassword,
+            acceptedTerms,
         });
-    }
 
-    try {
-        setIsLoading(true);
-        setFormError("");
-
-        await clearExistingSession();
-
-        await registerUser(
-            fullName.trim(),
-            normalisedEmail,
-            password
-        );
-
-        await goToVerification();
-    } catch (error: any) {
-        if (error?.name !== "UsernameExistsException") {
-            await AsyncStorage.multiRemove([
-                "pendingVerificationEmail",
-                "pendingNotificationPreference",
-            ]);
-
-            setFormError(getSignUpErrorMessage(error));
+        if (validationError) {
+            setFormError(validationError);
             return;
         }
 
+        const normalisedEmail = email.trim().toLowerCase();
+
+        async function storePendingRegistration() {
+            await AsyncStorage.multiSet([
+                ["pendingVerificationEmail", normalisedEmail],
+                [
+                    "pendingNotificationPreference",
+                    JSON.stringify({
+                        email: normalisedEmail,
+                        savedPetStatusEmailsEnabled: notifySavedPets,
+                    }),
+                ],
+            ]);
+        }
+
+        async function goToVerification() {
+            await storePendingRegistration();
+
+            router.replace({
+                pathname: routes.auth.verifyEmail,
+                params: { email: normalisedEmail },
+            });
+        }
+
         try {
+            setIsLoading(true);
+            setFormError("");
+
             await clearExistingSession();
 
-            const loginResult = await loginUser(
+            await registerUser(
+                fullName.trim(),
                 normalisedEmail,
                 password
             );
 
-            if (loginResult.isSignedIn) {
-                await signOut();
+            await goToVerification();
+        } catch (error: any) {
+            if (error?.name !== "UsernameExistsException") {
+                await AsyncStorage.multiRemove([
+                    "pendingVerificationEmail",
+                    "pendingNotificationPreference",
+                ]);
+
+                setFormError(getSignUpErrorMessage(error));
+                return;
+            }
+
+            try {
+                await clearExistingSession();
+
+                const loginResult = await loginUser(
+                    normalisedEmail,
+                    password
+                );
+
+                if (loginResult.isSignedIn) {
+                    await signOut();
+
+                    await AsyncStorage.multiRemove([
+                        "pendingVerificationEmail",
+                        "pendingNotificationPreference",
+                    ]);
+
+                    setFormError(
+                        "You already have an account. Please log in instead."
+                    );
+                    return;
+                }
 
                 await AsyncStorage.multiRemove([
                     "pendingVerificationEmail",
@@ -127,49 +138,38 @@ export default function CreateAccountScreen() {
                 setFormError(
                     "You already have an account. Please log in instead."
                 );
-                return;
-            }
+            } catch (loginError: any) {
+                if (loginError?.name === "UserNotConfirmedException") {
+                    try {
+                        await resendVerificationCode(normalisedEmail);
+                        await goToVerification();
+                        return;
+                    } catch {
+                        await AsyncStorage.multiRemove([
+                            "pendingVerificationEmail",
+                            "pendingNotificationPreference",
+                        ]);
 
-            await AsyncStorage.multiRemove([
-                "pendingVerificationEmail",
-                "pendingNotificationPreference",
-            ]);
-
-            setFormError(
-                "You already have an account. Please log in instead."
-            );
-        } catch (loginError: any) {
-            if (loginError?.name === "UserNotConfirmedException") {
-                try {
-                    await resendVerificationCode(normalisedEmail);
-                    await goToVerification();
-                    return;
-                } catch {
-                    await AsyncStorage.multiRemove([
-                        "pendingVerificationEmail",
-                        "pendingNotificationPreference",
-                    ]);
-
-                    setFormError(
-                        "We couldn't resend your verification code. Please try again."
-                    );
-                    return;
+                        setFormError(
+                            "We couldn't resend your verification code. Please try again."
+                        );
+                        return;
+                    }
                 }
+
+                await AsyncStorage.multiRemove([
+                    "pendingVerificationEmail",
+                    "pendingNotificationPreference",
+                ]);
+
+                setFormError(
+                    "You already have an account. Please log in instead."
+                );
             }
-
-            await AsyncStorage.multiRemove([
-                "pendingVerificationEmail",
-                "pendingNotificationPreference",
-            ]);
-
-            setFormError(
-                "You already have an account. Please log in instead."
-            );
+        } finally {
+            setIsLoading(false);
         }
-    } finally {
-        setIsLoading(false);
     }
-}
 
     function handleTermsOfService() {
         router.push(routes.legal.tos)
@@ -195,25 +195,36 @@ export default function CreateAccountScreen() {
                 </View>
             </View>
 
+
             <View style={styles.hero}>
                 <View style={styles.heroText}>
                     <Text style={styles.title}>Create your account</Text>
                     <Text style={styles.subtitle}>
-                        Join PetPath to get personalised recommendations and find pets that
-                        suit your lifestyle.
+                        Join PetPath to get personalised recommendations
+                    </Text>
+                    <Text style={styles.subtitle}>
+                        and find pets that suit your lifestyle.
                     </Text>
                 </View>
 
-                <PetHeroImage width={200} height={200} top={-30} right={-40} />
             </View>
 
             <View style={styles.cardLayer}>
                 <DecorativeLeaf
                     width={140}
                     height={140}
-                    bottom={-45}
+                    bottom={-85}
                     left={-45}
-                    rotate={90}
+                    rotate={0}
+                    opacity={1}
+                    zIndex={0}
+                />
+                <DecorativeLeaf
+                    width={140}
+                    height={140}
+                top={-235}
+                    left={-65}
+                    rotate={150}
                     opacity={1}
                     zIndex={0}
                 />
@@ -221,10 +232,21 @@ export default function CreateAccountScreen() {
                 <DecorativeLeaf
                     width={140}
                     height={140}
-                    bottom={-45}
-                    right={-45}
-                    rotate={-90}
+                    top={-175}
+                    right={-75}
+                    rotate={150}
+                    flipY
                     flipX
+                    opacity={1}
+                    zIndex={0}
+                />
+
+                <DecorativeLeaf
+                    width={140}
+                    height={140}
+                    bottom={-85}
+                    right={-45}
+                    rotate={50}
                     opacity={1}
                     zIndex={0}
                 />
@@ -282,9 +304,11 @@ export default function CreateAccountScreen() {
                             }}
                         />
 
-                        {formError ? (
-                            <Text style={styles.errorText}>{formError}</Text>
-                        ) : null}
+                        <View style={styles.errorSlot}>
+                            <Text style={[styles.errorText, !formError && styles.hiddenError]}>
+                                {formError || " "}
+                            </Text>
+                        </View>
 
                         <TouchableOpacity
                             style={styles.checkboxRow}
@@ -375,17 +399,18 @@ const styles = StyleSheet.create({
         position: "relative",
         minHeight: 175,
         justifyContent: "center",
+        alignContent: "center",
         overflow: "visible",
-        marginTop: theme.spacing.md,
-    },
-
-    heroText: {
-        width: "58%",
-        zIndex: 2,
         marginTop: -30,
     },
 
+    heroText: {
+        alignContent: "center",
+        zIndex: 2,
+    },
+
     title: {
+        textAlign: "center",
         fontSize: 28,
         lineHeight: 34,
         fontWeight: "900",
@@ -393,19 +418,11 @@ const styles = StyleSheet.create({
     },
 
     subtitle: {
+        textAlign: "center",
         marginTop: 6,
         fontSize: 13,
-        lineHeight: 18,
+        lineHeight: 13,
         color: theme.colors.text,
-    },
-    petIllustration: {
-        width: 110,
-        height: 110,
-        borderRadius: 55,
-        backgroundColor: theme.colors.paleGreen,
-        alignItems: "center",
-        justifyContent: "center",
-        marginLeft: theme.spacing.sm,
     },
     checkboxRow: {
         flexDirection: "row",
@@ -467,11 +484,20 @@ const styles = StyleSheet.create({
         elevation: 2,
         marginTop: -20
     },
+    errorSlot: {
+        minHeight: 25,
+        justifyContent: "center",
+        marginTop: -5
+    },
+
     errorText: {
         color: theme.colors.error,
-        fontSize: 14,
+        fontSize: 12,
+        fontWeight: 800,
         textAlign: "center",
-        marginBottom: theme.spacing.sm,
+    },
+    hiddenError: {
+        opacity: 0,
     },
 
 });

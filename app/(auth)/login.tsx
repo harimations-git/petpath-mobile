@@ -141,7 +141,7 @@ export default function LoginScreen() {
     }
 
     return (
-        <Screen>
+        <Screen scrollable>
             <Logo hasTagline={true} />
 
             <View style={styles.hero}>
