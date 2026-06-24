@@ -3,6 +3,8 @@ import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { router } from "expo-router";
 import { routes } from "../../src/constants/routes";
+import { signOut } from "aws-amplify/auth";
+import { getCurrentUserProfile } from "../../src/services/user/userService";
 
 import Screen from "../../src/components/layout/Screen"
 import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
@@ -14,9 +16,7 @@ import AppButtonProps from "../../src/components/ui/AppButton";
 import InfoModal from "../../src/components/ui/infoModal";
 import { Ionicons } from "@expo/vector-icons";
 import DistanceSlider from "../../src/components/ui/DistanceSlider";
-
-import { getCurrentUserProfile } from "../../src/services/user/userService";
-
+import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 
 export default function Settings() {
 
@@ -34,6 +34,7 @@ export default function Settings() {
     useEffect(() => {
         async function loadCurrentUser() {
             try {
+                setIsLoadingProfile(true)
                 const profile = await getCurrentUserProfile();
                 setUserProfile(profile);
             } catch (error) {
@@ -45,7 +46,17 @@ export default function Settings() {
         loadCurrentUser();
     }, []);
 
-    function handleSaveDistance(){
+    async function handleLogout() {
+        try {
+            await signOut();
+            setInfoModalVisible(false);
+            router.replace(routes.auth.login);
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+    }
+
+    function handleSaveDistance() {
         Alert.alert("WIP")
     }
 
@@ -88,8 +99,17 @@ export default function Settings() {
                             </View>
 
                             <View style={styles.accountText}>
-                                <Text style={styles.accountName}>{userProfile?.fullName || "Username"}</Text>
-                                <Text style={styles.accountEmail}>{userProfile?.email || "Username@email.com"}</Text>
+                                {isLoadingProfile ? (
+                                    <LoadingSpinner size="small" />
+                                ) : (
+                                    <>
+                                        <Text style={styles.accountName}>
+                                            {userProfile?.fullName || "Username"}
+                                        </Text>
+                                        <Text style={styles.accountEmail}>{userProfile?.email || "Username@email.com"}</Text>
+                                    </>
+                                )}
+                                
                                 <Text style={styles.viewMore}>View account details</Text>
                             </View>
 
@@ -201,7 +221,7 @@ export default function Settings() {
                 buttonText="Continue"
                 buttonTextSecondary="Cancel"
                 iconName="leaf-outline"
-                onConfirm={() => router.push("/settings")}
+                onConfirm={handleLogout} //should log the user out
                 onClose={() => setInfoModalVisible(false)}
             />
         </Screen>
