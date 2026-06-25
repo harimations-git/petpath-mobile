@@ -31,7 +31,9 @@ export default function LifestyleQuestionnaireScreen() {
     const [infoModalVisible, setInfoModalVisible] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    function handleContinue() {
+    async function handleSubmitQuestionnaire() {
+        if (isSubmitting) return;
+
         const allFieldsChosen =
             homeType &&
             outdoorSpace &&
@@ -41,34 +43,34 @@ export default function LifestyleQuestionnaireScreen() {
             petExperience;
 
         if (!allFieldsChosen) {
-            setFormError("Please make sure all fields are chosen before continuing.");
+            setFormError("Please make sure all fields are chosen before saving.");
             return;
         }
-
-        setFormError("");
-        setInfoModalVisible(true);
-    }
-
-    async function handleSubmitQuestionnaire() {
-        if (isSubmitting) return;
 
         try {
             setIsSubmitting(true);
             setFormError("");
 
             await saveLifestyleProfile({
-                homeType, outdoorSpace, activityLevel, dailyRoutine, budget, petExperience,
+                homeType,
+                outdoorSpace,
+                activityLevel,
+                dailyRoutine,
+                budget,
+                petExperience,
             });
 
             setInfoModalVisible(true);
         } catch (error) {
-            console.error("Questionnaire error: ", error)
+            console.error("Questionnaire error:", error);
 
             setInfoModalVisible(false);
 
             setFormError(
-                error instanceof Error ? error.message : "We couldn't save your answers. Please try again."
-            )
+                error instanceof Error
+                    ? error.message
+                    : "We couldn't save your answers. Please try again."
+            );
         } finally {
             setIsSubmitting(false);
         }

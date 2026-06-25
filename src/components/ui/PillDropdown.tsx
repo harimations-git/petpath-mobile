@@ -35,6 +35,12 @@ export default function PillDropdown({
     const selectedOption = options.find((option) => option.value === selectedValue);
     const hasSelected = Boolean(selectedOption);
 
+    const label = selectedOption?.label ?? placeholder;
+
+    const displayLabel =
+        label.length > 6 ? `${label.slice(0, 6)}...` : label;
+
+
     function handleSelect(value: string) {
         onSelect(value);
         setModalVisible(false);
@@ -56,13 +62,14 @@ export default function PillDropdown({
                 </View>
                 <View style={[styles.valuePill, hasSelected ? styles.selectedPill : styles.placeholderPill]}>
                     <Text style={[styles.valueText, hasSelected ? styles.selectedText : styles.placeholderText]}>
-                        {selectedOption?.label ?? placeholder}
+                        {displayLabel}
                     </Text>
 
                     <Ionicons
                         name="chevron-down"
                         size={18}
                         color={hasSelected ? "#FFFFFF" : theme.colors.muted}
+                        style={styles.chevronIcon}
                     />
                 </View>
             </TouchableOpacity>
@@ -169,6 +176,7 @@ const styles = StyleSheet.create({
     },
 
     valuePill: {
+        position: "relative",
         minWidth: 128,
         height: 32,
         borderRadius: 16,
@@ -187,9 +195,15 @@ const styles = StyleSheet.create({
         backgroundColor: "#E6E8E6",
     },
 
+    chevronIcon: {
+        position: "absolute",
+        right: theme.spacing.md,
+    },
+
     valueText: {
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: "700",
+        textAlign: "left",
     },
 
     selectedText: {
@@ -238,6 +252,7 @@ const styles = StyleSheet.create({
         color: theme.colors.primaryDark,
         fontWeight: "800",
     },
+
 
     separator: {
         height: 1,

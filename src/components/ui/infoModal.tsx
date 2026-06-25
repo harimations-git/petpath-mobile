@@ -1,11 +1,13 @@
 import { Modal, View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../constants/theme";
+import Spacer from "../layout/Spacer";
 
 type InfoModalProps = {
     visible: boolean;
     title: string;
     message?: string;
+    warning?: string;
     buttonText?: string;
     buttonTextSecondary?: string;
     iconName?: keyof typeof Ionicons.glyphMap;
@@ -17,6 +19,7 @@ export default function InfoModal({
     visible,
     title,
     message,
+    warning,
     buttonText = "Continue",
     buttonTextSecondary,
     iconName = "information-circle-outline",
@@ -44,6 +47,13 @@ export default function InfoModal({
 
                     <Text style={styles.message}>{message}</Text>
 
+                    {warning ? (
+                        <>
+                            <Text style={styles.warningMessage}>{warning}</Text>
+                        </>
+                    ) : null}
+
+                    <Spacer height={20}/>
                     <View style={styles.buttonRow}>
                         {buttonTextSecondary ? (
                             <TouchableOpacity
@@ -119,7 +129,7 @@ const styles = StyleSheet.create({
         lineHeight: 21,
         color: theme.colors.text,
         textAlign: "center",
-        marginBottom: theme.spacing.lg,
+        marginBottom: theme.spacing.sm,
     },
 
     buttonRow: {
@@ -164,5 +174,12 @@ const styles = StyleSheet.create({
         color: theme.colors.primaryDark,
         fontSize: 14,
         fontWeight: "800",
+    },
+
+    warningMessage: {
+        color: theme.colors.error,
+        fontSize: 14,
+        fontWeight: 800,
+        textAlign: "center",
     },
 });

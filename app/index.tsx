@@ -6,6 +6,7 @@ import LoadingSpinner from "../src/components/ui/LoadingSpinner";
 import Screen from "../src/components/layout/Screen";
 import { routes } from "../src/constants/routes";
 import { redirectAfterLogin } from "../src/utils/navigation/redirectAfterLogin";
+import Spacer from "../src/components/layout/Spacer";
 
 export default function IndexScreen() {
     useEffect(() => {
@@ -23,7 +24,8 @@ export default function IndexScreen() {
 
     return (
         <Screen>
-            <LoadingSpinner />
+            <Spacer height={350}/>
+            <LoadingSpinner size="large"/>
         </Screen>
     );
 }

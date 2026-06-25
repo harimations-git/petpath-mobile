@@ -19,6 +19,10 @@ export const routes = {
     matches: "/(tabs)/matches",
     savedPets: "/(tabs)/saved-pets",
     learn: "/(tabs)/learn",
-    profile: "/(tabs)/profile",
+    settings: "/(tabs)/settings",
   },
+  settings:{
+    account: "/(settings)/account",
+    lifestyle: "/(settings)/lifestyle"
+  }
 };

@@ -68,7 +68,7 @@ export default function AccountTypeScreen() {
                     <TouchableOpacity
                         style={styles.accountOption}
                         activeOpacity={0.85}
-                        onPress={() => router.push("/(auth)/create-account")}
+                        onPress={handleCreateRegularAccount}
                     >
                         <View style={styles.optionIcon}>
                             <Ionicons
@@ -82,7 +82,7 @@ export default function AccountTypeScreen() {
                             <Text style={styles.optionLabel}>For adopters</Text>
                             <Text style={styles.optionTitle}>Regular account</Text>
                             <Text style={styles.optionDescription}>
-                                Find suitable pets, save favourites, and contact shelters or breeders.
+                                Find suitable pets, save favourites and contact shelters for adoption.
                             </Text>
                         </View>
 

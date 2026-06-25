@@ -5,6 +5,8 @@ import { router } from "expo-router";
 import { routes } from "../../src/constants/routes";
 import { signOut } from "aws-amplify/auth";
 import { getCurrentUserProfile } from "../../src/services/user/userService";
+import { getLifestyleProfile } from "../../src/services/user/lifestyleProfileService";
+import { updateSearchDistance } from "../../src/services/user/lifestyleProfileService";
 
 import Screen from "../../src/components/layout/Screen"
 import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
@@ -20,10 +22,16 @@ import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 
 export default function Settings() {
 
-    const [distance, setDistance] = useState(5)
+    const [distance, setDistance] = useState(5);
+
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
+    const [distanceError, setDistanceError] = useState("");
+    const [successMessage, setSuccessMessage] = useState("Save Settings");
+
     const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+    const [isLoadingDistance, setIsLoadingDistance] = useState(false);
+    const [isSavingDistance, setIsSavingDistance] = useState(false);
     const [infoModalVisible, setInfoModalVisible] = useState(false);
 
     type UserProfile = {
@@ -32,18 +40,61 @@ export default function Settings() {
     };
 
     useEffect(() => {
-        async function loadCurrentUser() {
+        let isMounted = true;
+
+        async function loadSettingsData() {
             try {
-                setIsLoadingProfile(true)
-                const profile = await getCurrentUserProfile();
-                setUserProfile(profile);
-            } catch (error) {
-                console.log("Could not load current user profile:", error);
+                setIsLoadingProfile(true);
+                setIsLoadingDistance(true);
+                setDistanceError("");
+
+                const [profileResult, lifestyleResult] =
+                    await Promise.allSettled([
+                        getCurrentUserProfile(),
+                        getLifestyleProfile(),
+                    ]);
+
+                if (!isMounted) return;
+
+                if (profileResult.status === "fulfilled") {
+                    setUserProfile(profileResult.value);
+                } else {
+                    console.log(
+                        "Could not load current user profile:",
+                        profileResult.reason
+                    );
+                }
+
+                if (lifestyleResult.status === "fulfilled") {
+                    const savedDistance =
+                        lifestyleResult.value.searchDistance;
+
+                    if (typeof savedDistance === "number") {
+                        setDistance(savedDistance);
+                    }
+                } else {
+                    console.log(
+                        "Could not load lifestyle profile:",
+                        lifestyleResult.reason
+                    );
+
+                    setDistanceError(
+                        "Unable to load your saved search distance."
+                    );
+                }
             } finally {
-                setIsLoadingProfile(false);
+                if (isMounted) {
+                    setIsLoadingProfile(false);
+                    setIsLoadingDistance(false);
+                }
             }
         }
-        loadCurrentUser();
+
+        loadSettingsData();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     async function handleLogout() {
@@ -56,8 +107,29 @@ export default function Settings() {
         }
     }
 
-    function handleSaveDistance() {
-        Alert.alert("WIP")
+    async function handleSaveDistance() {
+        try {
+            setIsSavingDistance(true);
+            setDistanceError("");
+
+            await updateSearchDistance(distance);
+
+
+        } catch (error: any) {
+            console.error("Save distance error:", error);
+
+            setDistanceError(
+                error?.message || "Unable to save search distance."
+            );
+        } finally {
+            setSuccessMessage("Search distance saved!");
+            setIsSavingDistance(false);
+        }
+    }
+
+    async function handleDistanceChange(value: number) {
+        setDistance(value)
+        setSuccessMessage("Save Settings")
     }
 
     return (
@@ -91,7 +163,7 @@ export default function Settings() {
 
                         <TouchableOpacity
                             style={styles.accountSummary}
-                            activeOpacity={0.85}
+                            activeOpacity={1}
                             onPress={() => router.push("/settings/account")}
                         >
                             <View style={styles.accountIcon}>
@@ -109,7 +181,7 @@ export default function Settings() {
                                         <Text style={styles.accountEmail}>{userProfile?.email || "Username@email.com"}</Text>
                                     </>
                                 )}
-                                
+
                                 <Text style={styles.viewMore}>View account details</Text>
                             </View>
 
@@ -123,12 +195,12 @@ export default function Settings() {
                         <TouchableOpacity
                             style={styles.settingsRow}
                             activeOpacity={0.85}
-                            onPress={() => router.push(routes.onboarding.lifestyle)}
+                            onPress={() => router.push(routes.settings.lifestyle)}
                         >
                             <Ionicons name="home-outline" size={22} color={theme.colors.primaryDark} />
                             <View style={styles.rowText}>
                                 <Text style={styles.rowTitle}>Lifestyle questionnaire</Text>
-                                <Text style={styles.rowDescription}>Update your answers anytime.</Text>
+                                <Text style={styles.rowDescription}>Only update your answers when your circumstances have genuinely changed. Your answers should reflect your real situation, not the results you want to see.</Text>
                             </View>
                             <Ionicons name="chevron-forward" size={20} color={theme.colors.primaryDark} />
                         </TouchableOpacity>
@@ -142,16 +214,28 @@ export default function Settings() {
 
                             </View>
                             <Spacer height={20} />
-                            <DistanceSlider
-                                value={distance}
-                                onChange={setDistance}
-                                min={5}
-                                max={100}
-                                step={1}
-                                unit="miles"
-                                labels={["5 miles", "25 miles", "100 miles"]}
-                                caption={(value) => `Within ${value} miles`}
-                            />
+                            {isLoadingDistance ? (
+                                <LoadingSpinner size="small" />
+                            ) : (
+                                <DistanceSlider
+                                    value={distance}
+                                    onChange={((value) =>
+                                        handleDistanceChange(value)
+                                    )}
+                                    min={5}
+                                    max={100}
+                                    step={1}
+                                    unit="miles"
+                                    labels={["5 miles", "25 miles", "100 miles"]}
+                                    caption={(value) => `Within ${value} miles`}
+                                />
+                            )}
+
+                            {distanceError ? (
+                                <Text style={styles.formError}>
+                                    {distanceError}
+                                </Text>
+                            ) : null}
 
                             <TouchableOpacity
                                 style={[styles.button, styles.primaryButton]}
@@ -159,9 +243,15 @@ export default function Settings() {
                                 onPress={handleSaveDistance}
                             >
                                 <View style={styles.primaryButtonContent}>
-                                    <Text style={styles.primaryButtonText}>
-                                        Save
-                                    </Text>
+                                    {isSavingDistance ? (
+                                        <LoadingSpinner size="small" />
+                                    ) : (
+
+                                        <Text style={styles.primaryButtonText}>
+                                            {successMessage}
+                                        </Text>
+
+                                    )}
                                 </View>
 
                             </TouchableOpacity>
@@ -221,7 +311,7 @@ export default function Settings() {
                 buttonText="Continue"
                 buttonTextSecondary="Cancel"
                 iconName="leaf-outline"
-                onConfirm={handleLogout} //should log the user out
+                onConfirm={handleLogout}
                 onClose={() => setInfoModalVisible(false)}
             />
         </Screen>
@@ -391,6 +481,14 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.primaryDark,
     },
 
+    formError: {
+        color: theme.colors.error,
+        fontSize: 12,
+        fontWeight: "700",
+        textAlign: "center",
+        marginBottom: 6,
+    },
+
     button: {
         flex: 1,
         minHeight: 48,
@@ -406,7 +504,7 @@ const styles = StyleSheet.create({
     primaryButtonContent: {
         flexDirection: "row",
         alignItems: "center",
-        width: "18%",
+        width: "100%",
         justifyContent: "center",
     },
 
