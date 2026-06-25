@@ -10,7 +10,7 @@ import PetHeroImage from "../../src/components/ui/PetHeroImage";
 
 
 
-export default function LoginScreen() {
+export default function HomeScreen() {
 
 
     return (

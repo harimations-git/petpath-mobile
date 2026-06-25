@@ -1,24 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 import Screen from "../../src/components/layout/Screen"
-import AppTextInput from "../../src/components/ui/AppTextInput"
 import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
-import AppButton from "../../src/components/ui/AppButton"
 import Logo from "../../src/components/ui/Logo"
-import Card from "../../src/components/ui/Card"
-import NoticeMessage from "../../src/components/ui/NoticeMessage";
-import Spacer from "../../src/components/layout/Spacer";
-import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 import { theme } from "../../src/constants/theme";
 
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import { routes } from "../../src/constants/routes";
 import BackButton from "../../src/components/ui/BackButton";
 import PetHeroImage from "../../src/components/ui/PetHeroImage";
 
-export default function LoginScreen() {
+export default function AccountTypeScreen() {
 
     function handleCreateRegularAccount() {
         router.push(routes.auth.createAccount)
@@ -74,7 +68,7 @@ export default function LoginScreen() {
                     <TouchableOpacity
                         style={styles.accountOption}
                         activeOpacity={0.85}
-                        onPress={() => router.push("/(auth)/create-account")}
+                        onPress={handleCreateRegularAccount}
                     >
                         <View style={styles.optionIcon}>
                             <Ionicons
@@ -88,7 +82,7 @@ export default function LoginScreen() {
                             <Text style={styles.optionLabel}>For adopters</Text>
                             <Text style={styles.optionTitle}>Regular account</Text>
                             <Text style={styles.optionDescription}>
-                                Find suitable pets, save favourites, and contact shelters or breeders.
+                                Find suitable pets, save favourites and contact shelters for adoption.
                             </Text>
                         </View>
 

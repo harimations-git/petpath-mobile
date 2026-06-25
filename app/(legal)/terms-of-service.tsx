@@ -16,42 +16,49 @@ export default function TermsOfServiceScreen() {
             scrollable={true}
             contentContainerStyle={styles.verificationContent}
         >
+
+            <Spacer height={30}/>
             <View style={styles.header}>
                 <View style={styles.backButtonWrapper}>
                     <BackButton />
                 </View>
 
-                <View style={styles.logoWrapper}>
-                    <Logo hasTagline={true} />
-                </View>
+                    <View style={styles.heroText}>
+                        <Text style={styles.title}>Terms of Service</Text>
+                    </View>
             </View>
 
             <View style={styles.hero}>
-                <View style={styles.heroText}>
-                    <Text style={styles.title}>Terms of Service</Text>
-                    <Text style={styles.subtitle}>
-                        These terms explain how PetPath should be used and how the adoption process works through official rescue organisations.
-                    </Text>
+                    <View style={styles.heroText}>
+                        
+                        <Text style={styles.subtitle}>
+                            PetPath’s terms for using the app and adopting through official rescues.
+                        </Text>
+                    </View>
                 </View>
-            </View>
 
             <View style={styles.cardLayer}>
+
+
                 <DecorativeLeaf
                     width={140}
                     height={140}
-                    bottom={-45}
-                    left={-45}
-                    rotate={90}
+                    top={-170}
+                    left={-65}
+                    rotate={150}
                     opacity={1}
                     zIndex={0}
                 />
 
+
+
                 <DecorativeLeaf
                     width={140}
                     height={140}
-                    bottom={-45}
-                    right={-45}
-                    rotate={-90}
+                    bottom={-150}
+                    right={20}
+                    rotate={50}
+                    flipY
                     flipX
                     opacity={1}
                     zIndex={0}
@@ -185,7 +192,7 @@ const styles = StyleSheet.create({
         position: "relative",
         zIndex: 2,
         elevation: 2,
-        marginTop: theme.spacing.md,
+        marginTop: -10,
     },
 
     cardHeading: {
@@ -209,11 +216,12 @@ const styles = StyleSheet.create({
     },
 
     termsScroll: {
-        maxHeight: 430,
+        maxHeight: 590,
     },
 
     termsScrollContent: {
-        paddingBottom: theme.spacing.sm,
+        paddingTop: theme.spacing.md,
+        paddingBottom: theme.spacing.md,
     },
 
     section: {

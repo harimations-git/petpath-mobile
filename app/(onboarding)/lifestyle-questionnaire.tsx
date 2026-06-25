@@ -18,7 +18,7 @@ import PillDropdown from "../../src/components/ui/PillDropdown";
 import InfoModal from "../../src/components/ui/infoModal";
 import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 
-export default function CreateAccountScreen() {
+export default function LifestyleQuestionnaireScreen() {
     const [homeType, setHomeType] = useState("");
     const [outdoorSpace, setOutdoorSpace] = useState("");
     const [activityLevel, setActivityLevel] = useState("");
@@ -31,7 +31,9 @@ export default function CreateAccountScreen() {
     const [infoModalVisible, setInfoModalVisible] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    function handleContinue() {
+    async function handleSubmitQuestionnaire() {
+        if (isSubmitting) return;
+
         const allFieldsChosen =
             homeType &&
             outdoorSpace &&
@@ -41,34 +43,34 @@ export default function CreateAccountScreen() {
             petExperience;
 
         if (!allFieldsChosen) {
-            setFormError("Please make sure all fields are chosen before continuing.");
+            setFormError("Please make sure all fields are chosen before saving.");
             return;
         }
-
-        setFormError("");
-        setInfoModalVisible(true);
-    }
-
-    async function handleSubmitQuestionnaire() {
-        if (isSubmitting) return;
 
         try {
             setIsSubmitting(true);
             setFormError("");
 
             await saveLifestyleProfile({
-                homeType, outdoorSpace, activityLevel, dailyRoutine, budget, petExperience,
+                homeType,
+                outdoorSpace,
+                activityLevel,
+                dailyRoutine,
+                budget,
+                petExperience,
             });
 
             setInfoModalVisible(true);
         } catch (error) {
-            console.error("Questionnaire error: ", error)
+            console.error("Questionnaire error:", error);
 
             setInfoModalVisible(false);
 
             setFormError(
-                error instanceof Error ? error.message : "We couldn't save your answers. Please try again."
-            )
+                error instanceof Error
+                    ? error.message
+                    : "We couldn't save your answers. Please try again."
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -246,7 +248,7 @@ export default function CreateAccountScreen() {
                 }
                 buttonText="Got it"
                 iconName="leaf-outline"
-                onClose={() => {
+                onConfirm={() => {
                     setInfoModalVisible(false);
                     router.replace(routes.onboarding.location);
                 }}

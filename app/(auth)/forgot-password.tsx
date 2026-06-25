@@ -15,7 +15,7 @@ import Spacer from "../../src/components/layout/Spacer";
 import AppTextInput from "../../src/components/ui/AppTextInput";
 import AppButtonProps from "../../src/components/ui/AppButton";
 
-export default function PrivacyPolicyScreen() {
+export default function ForgotPasswordScreen() {
 
     const params = useLocalSearchParams<{ email?: string }>();
 
