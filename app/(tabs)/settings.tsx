@@ -164,7 +164,7 @@ export default function Settings() {
                         <TouchableOpacity
                             style={styles.accountSummary}
                             activeOpacity={1}
-                            onPress={() => router.push("/settings/account")}
+                            onPress={() => router.push(routes.settings.account)}
                         >
                             <View style={styles.accountIcon}>
                                 <Ionicons name="person-outline" size={24} color={theme.colors.primaryDark} />

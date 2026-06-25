@@ -1,4 +1,4 @@
-import { Modal, View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Modal, View, Text, StyleSheet, ViewStyle, StyleProp, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../constants/theme";
 import Spacer from "../layout/Spacer";
@@ -13,6 +13,7 @@ type InfoModalProps = {
     iconName?: keyof typeof Ionicons.glyphMap;
     onConfirm?: () => void;
     onClose?: () => void;
+    primaryButtonStyle?: StyleProp<ViewStyle>;
 };
 
 export default function InfoModal({
@@ -25,6 +26,7 @@ export default function InfoModal({
     iconName = "information-circle-outline",
     onConfirm,
     onClose,
+    primaryButtonStyle
 }: InfoModalProps) {
     return (
         <Modal
@@ -71,7 +73,7 @@ export default function InfoModal({
                         )}
 
                         <TouchableOpacity
-                            style={[styles.button, styles.primaryButton]}
+                            style={[styles.button, styles.primaryButton, primaryButtonStyle]}
                             activeOpacity={0.85}
                             onPress={() => onConfirm?.()}
                         >
