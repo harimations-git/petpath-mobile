@@ -1,3 +1,5 @@
+import { resetPassword } from "aws-amplify/auth";
+
 export const routes = {
   legal: {
     tos: "/(legal)/terms-of-service",
@@ -23,6 +25,7 @@ export const routes = {
   },
   settings:{
     account: "/(settings)/account",
-    lifestyle: "/(settings)/lifestyle"
+    lifestyle: "/(settings)/lifestyle",
+    resetPassword: "/(settings)/reset-password"
   }
 };

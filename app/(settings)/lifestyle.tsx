@@ -17,7 +17,7 @@ import InfoModal from "../../src/components/ui/infoModal";
 import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 import PetHeroImage from "../../src/components/ui/PetHeroImage";
 
-export default function LifestyleQuestionnaireScreen() {
+export default function LifestyleQuestionnaireUpdateScreen() {
     const [buttonTitle, setButtonTitle] = useState("Continue")
 
     const [homeType, setHomeType] = useState("");

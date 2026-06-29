@@ -12,21 +12,29 @@ import { theme } from "../../constants/theme";
 type BackButtonProps = {
   style?: StyleProp<ViewStyle>;
   fallbackRoute?: string;
+  customRoute?: string;
 };
 
 export default function BackButton({
   style,
   fallbackRoute = "/",
+  customRoute,
 }: BackButtonProps) {
   const router = useRouter();
   const navigation = useNavigation();
 
   function handleBack() {
+    if (customRoute) {
+      router.replace(customRoute as never);
+      return;
+    }
+
     if (navigation.canGoBack()) {
       router.back();
-    } else {
-      router.replace(fallbackRoute as never);
+      return;
     }
+
+    router.replace(fallbackRoute as never);
   }
 
   return (

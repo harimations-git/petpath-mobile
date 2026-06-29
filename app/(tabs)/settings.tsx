@@ -3,7 +3,7 @@ import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { router } from "expo-router";
 import { routes } from "../../src/constants/routes";
-import { signOut } from "aws-amplify/auth";
+import { signOut, fetchAuthSession } from "aws-amplify/auth";
 import { getCurrentUserProfile } from "../../src/services/user/userService";
 import { getLifestyleProfile } from "../../src/services/user/lifestyleProfileService";
 import { updateSearchDistance } from "../../src/services/user/lifestyleProfileService";
@@ -47,6 +47,19 @@ export default function Settings() {
                 setIsLoadingProfile(true);
                 setIsLoadingDistance(true);
                 setDistanceError("");
+
+                let hasSession = false;
+
+                try {
+                    const session = await fetchAuthSession();
+                    hasSession = !!session.tokens?.accessToken;
+                } catch {
+                    hasSession = false;
+                }
+
+                if (!hasSession) {
+                    return;
+                }
 
                 const [profileResult, lifestyleResult] =
                     await Promise.allSettled([
@@ -164,7 +177,7 @@ export default function Settings() {
                         <TouchableOpacity
                             style={styles.accountSummary}
                             activeOpacity={1}
-                            onPress={() => router.push("/settings/account")}
+                            onPress={() => router.push(routes.settings.account)}
                         >
                             <View style={styles.accountIcon}>
                                 <Ionicons name="person-outline" size={24} color={theme.colors.primaryDark} />

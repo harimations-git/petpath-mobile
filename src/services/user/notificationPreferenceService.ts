@@ -8,6 +8,48 @@ type PendingPreference = {
     savedPetStatusEmailsEnabled: boolean;
 };
 
+export async function getNotificationPreferences() {
+    const session = await fetchAuthSession();
+    const token = session.tokens?.accessToken?.toString();
+
+    if (!token) {
+        throw new Error("No Authenticated session.")
+    }
+
+    const response = await fetch(
+        `${API_URL}/users/me/notification-preferences`,
+        {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    const responseText = await response.text();
+
+    let body: any = {};
+    try {
+        body = JSON.parse(responseText);
+    } catch {
+        body = { message: responseText };
+    }
+
+    if (response.status === 404) {
+        return {
+            savedPetStatusEmailsEnabled: false,
+        };
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            body.message || "Unable to load notification preferences."
+        );
+    }
+
+    return body;
+}
+
 export async function savePendingNotificationPreference(
     signedInEmail: string
 ) {
@@ -89,4 +131,53 @@ export async function savePendingNotificationPreference(
     await AsyncStorage.removeItem(
         "pendingNotificationPreference"
     );
+}
+
+export async function updateNotificationPreferences(
+    savedPetStatusEmailsEnabled: boolean
+) {
+    const session = await fetchAuthSession();
+    const token = session.tokens?.accessToken?.toString();
+
+    if (!token) {
+        throw new Error("No authenticated session.");
+    }
+
+    const response = await fetch(
+        `${API_URL}/users/me/notification-preferences`,
+        {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                savedPetStatusEmailsEnabled,
+            }),
+        }
+    );
+
+    const responseText = await response.text();
+
+    console.log(
+        "Notification preference response:",
+        response.status,
+        responseText
+    );
+
+    let body: any = {};
+
+    try{
+        body = JSON.parse(responseText);
+    } catch {
+        body = { message: responseText};
+    }
+
+    if(!response.ok){
+        throw new Error(
+            body.message || "Unable to save notification preferences."
+        )
+    }
+
+    return body;
 }
