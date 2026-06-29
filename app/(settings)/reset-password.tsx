@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { useLocalSearchParams, router } from "expo-router";
@@ -14,8 +14,9 @@ import { theme } from "../../src/constants/theme";
 import Spacer from "../../src/components/layout/Spacer";
 import AppTextInput from "../../src/components/ui/AppTextInput";
 import AppButtonProps from "../../src/components/ui/AppButton";
+import InfoModal from "../../src/components/ui/infoModal";
 
-export default function ForgotPasswordScreen() {
+export default function ResetPasswordScreen() {
 
     const params = useLocalSearchParams<{ email?: string }>();
 
@@ -27,8 +28,11 @@ export default function ForgotPasswordScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [formError, setFormError] = useState("");
 
+    const [infoModalVisible, setInfoModalVisible] = useState(false);
+
+
     async function handleSendCode() {
-        if (!email.trim()) {
+        if (!email?.trim()) {
             setFormError("Please enter your email address.");
             return;
         }
@@ -71,12 +75,8 @@ export default function ForgotPasswordScreen() {
 
             await completePasswordReset(email, code, newPassword);
 
-            router.replace({
-                pathname: routes.auth.login,
-                params: {
-                    passwordReset: "true",
-                },
-            });
+            setInfoModalVisible(true)
+
         } catch (error: any) {
             if (error?.name === "CodeMismatchException") {
                 setFormError("The reset code is incorrect.");
@@ -138,7 +138,7 @@ export default function ForgotPasswordScreen() {
                 <View style={styles.cardWrapper}>
                     <Card>
                         <Text style={styles.heading}>
-                            {codeSent
+                            {codeSent && email
                                 ? "Create a new password"
                                 : "Forgot your password?"}
                         </Text>
@@ -247,6 +247,16 @@ export default function ForgotPasswordScreen() {
                     </Card>
                 </View>
             </View>
+            <InfoModal
+                visible={infoModalVisible}
+                title="Success!"
+                message="You password has been successfully changed"
+                buttonText="Continue"
+                iconName="checkmark-circle-outline"
+                onConfirm={() => {
+                    router.replace(routes.settings.account)
+                }}
+            />
         </Screen>
     );
 }

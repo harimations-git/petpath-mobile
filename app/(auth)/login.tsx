@@ -181,28 +181,7 @@ export default function LoginScreen() {
                 />
                 <View style={styles.cardWrapper}>
                     <Card>
-                        <View style={styles.formHeader}>
-                            <View style={styles.formIcon}>
-                                <Ionicons
-                                    name="lock-open-outline"
-                                    size={20}
-                                    color={theme.colors.primaryDark}
-                                />
-                            </View>
-
-                            <View style={styles.formHeaderText}>
-                                <Text style={styles.formTitle}>
-                                    Log in to your account
-                                </Text>
-                                <Text style={styles.formSubtitle}>
-                                    Enter your details below to continue.
-                                </Text>
-                            </View>
-                        </View>
-
-                        <Spacer height={20} />
-                        {loginNotice && (
-                            <>
+                        {loginNotice ? (
                                 <NoticeMessage
                                     iconName="key"
                                     message={
@@ -211,9 +190,30 @@ export default function LoginScreen() {
                                             : "Password reset successfully! Log in using your new password."
                                     }
                                 />
-                                <Spacer height={20} />
-                            </>
+                        ) : (
+                        <>
+                            <View style={styles.formHeader}>
+                                <View style={styles.formIcon}>
+                                    <Ionicons
+                                        name="lock-open-outline"
+                                        size={20}
+                                        color={theme.colors.primaryDark}
+                                    />
+                                </View>
+
+                                <View style={styles.formHeaderText}>
+                                    <Text style={styles.formTitle}>
+                                        Log in to your account
+                                    </Text>
+                                    <Text style={styles.formSubtitle}>
+                                        Enter your details below to continue.
+                                    </Text>
+                                </View>
+                            </View>
+                        </>
                         )}
+
+                        <Spacer height={20} />
 
                         <AppTextInput
                             label="Email address"

@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-import { router } from "expo-router";
+import { router, } from "expo-router";
 import { routes } from "../../src/constants/routes";
-import { signOut } from "aws-amplify/auth";
 import { deleteCurrentUserAccount, getCurrentUserProfile } from "../../src/services/user/userService";
 import { useLocalSearchParams } from "expo-router";
+
+import {
+    getNotificationPreferences,
+    updateNotificationPreferences,
+} from "../../src/services/user/notificationPreferenceService";
 
 import Screen from "../../src/components/layout/Screen"
 import DecorativeLeaf from "../../src/components/ui/DecorativeLeaf"
@@ -15,7 +19,6 @@ import Card from "../../src/components/ui/Card";
 import Spacer from "../../src/components/layout/Spacer";
 
 import { Ionicons } from "@expo/vector-icons";
-import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 import BackButton from "../../src/components/ui/BackButton";
 import InfoModal from "../../src/components/ui/infoModal";
 
@@ -26,17 +29,16 @@ export default function AccountSettings() {
         email?: string;
     }>();
 
-    const [distance, setDistance] = useState(5);
     const [emailUpdates, setEmailUpdates] = useState(false);
-
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-    const [distanceError, setDistanceError] = useState("");
-    const [successMessage, setSuccessMessage] = useState("Save Settings");
-
     const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+    const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
+    const [isSavingNotifications, setIsSavingNotifications] = useState(false);
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     const [infoModalVisible, setInfoModalVisible] = useState(false);
+
+    const [notificationError, setNotificationError] = useState("");
 
     type UserProfile = {
         fullName?: string;
@@ -49,7 +51,7 @@ export default function AccountSettings() {
         async function loadSettingsData() {
             try {
                 setIsLoadingProfile(true);
-                setDistanceError("");
+                loadNotificationPreferences();
 
                 const [profileResult] =
                     await Promise.allSettled([
@@ -82,6 +84,48 @@ export default function AccountSettings() {
         };
     }, []);
 
+    async function loadNotificationPreferences() {
+        try {
+            setIsLoadingNotifications(true);
+            setNotificationError("");
+
+            const preferences = await getNotificationPreferences();
+
+            setEmailUpdates(
+                preferences.savedPetStatusEmailsEnabled === true
+            );
+        } catch (error) {
+            console.error("Notification preference load error:", error);
+            setNotificationError("Unable to load notification preferences.");
+        } finally {
+            setIsLoadingNotifications(false);
+        }
+    }
+
+    async function handleEmailUpdatesToggle() {
+        if (isSavingNotifications) return;
+
+        const nextValue = !emailUpdates;
+
+        try {
+            setEmailUpdates(nextValue);
+            setIsSavingNotifications(true);
+            setNotificationError("");
+
+            await updateNotificationPreferences(nextValue);
+        } catch (error: any) {
+            console.error("Notification preference save error:", error);
+
+            setEmailUpdates(!nextValue);
+
+            setNotificationError(
+                error?.message || "Unable to update notification preferences."
+            );
+        } finally {
+            setIsSavingNotifications(false);
+        }
+    }
+
     async function handleDeleteAccount() {
         if (isDeletingAccount) return;
 
@@ -92,11 +136,11 @@ export default function AccountSettings() {
 
             setInfoModalVisible(false);
             router.replace({
-                            pathname: routes.auth.login,
-                            params: {
-                                deletedAccount: "true",
-                            },
-                        });
+                pathname: routes.auth.login,
+                params: {
+                    deletedAccount: "true",
+                },
+            });
         } catch (error) {
             console.error("Delete account error:", error);
 
@@ -110,7 +154,7 @@ export default function AccountSettings() {
         <Screen scrollable>
             <View style={styles.header}>
                 <View style={styles.backButtonWrapper}>
-                    <BackButton />
+                    <BackButton customRoute={routes.tabs.settings} />
                 </View>
 
                 <Logo hasTagline={true} />
@@ -186,7 +230,12 @@ export default function AccountSettings() {
                             style={styles.settingsRow}
                             activeOpacity={0.85}
                             onPress={() => {
-                                // handle reset password later
+                                router.push({
+                                    pathname: routes.settings.resetPassword,
+                                    params: {
+                                        email: userProfile?.email || "",
+                                    },
+                                });
                             }}
                         >
                             <Ionicons
@@ -209,16 +258,15 @@ export default function AccountSettings() {
                             />
                         </TouchableOpacity>
 
-                        <View style={styles.sectionGap}>
+                        < View style={styles.sectionGap}>
                             <Text style={styles.sectionTitle}>Email preferences</Text>
                         </View>
 
                         <TouchableOpacity
                             style={styles.checkboxRow}
                             activeOpacity={0.85}
-                            onPress={() =>
-                                setEmailUpdates(!emailUpdates)
-                            }
+                            disabled={isLoadingNotifications || isSavingNotifications}
+                            onPress={handleEmailUpdatesToggle}
                         >
                             <View
                                 style={[
@@ -242,6 +290,11 @@ export default function AccountSettings() {
                                 <Text style={styles.rowDescription}>
                                     Receive emails when pets you are interested in are reserved.
                                 </Text>
+
+                                {notificationError ? (
+                                    <Text style={styles.formError}>{notificationError}</Text>
+                                ) : null}
+
                             </View>
                         </TouchableOpacity>
 
@@ -273,7 +326,7 @@ export default function AccountSettings() {
                         </View>
                     </Card>
                 </View>
-            </View>
+            </View >
             <InfoModal
                 visible={infoModalVisible}
                 title="Warning!"
@@ -291,7 +344,7 @@ export default function AccountSettings() {
                     backgroundColor: theme.colors.error,
                 }}
             />
-        </Screen>
+        </Screen >
     );
 
 }
@@ -394,6 +447,12 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         paddingVertical: theme.spacing.sm,
+    },
+    formError: {
+        marginTop: theme.spacing.sm,
+        color: theme.colors.error,
+        fontSize: 12,
+        fontWeight: "700",
     },
 
     rowText: {
