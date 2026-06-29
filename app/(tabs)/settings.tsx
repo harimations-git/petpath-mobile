@@ -19,85 +19,45 @@ import InfoModal from "../../src/components/ui/infoModal";
 import { Ionicons } from "@expo/vector-icons";
 import DistanceSlider from "../../src/components/ui/DistanceSlider";
 import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
+import { useUserProfile } from "../../src/context/UserProfileContext";
 
 export default function Settings() {
 
     const [distance, setDistance] = useState(5);
-
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-
     const [distanceError, setDistanceError] = useState("");
     const [successMessage, setSuccessMessage] = useState("Save Settings");
 
-    const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+    const { userProfile, isLoadingProfile } = useUserProfile();
+
     const [isLoadingDistance, setIsLoadingDistance] = useState(false);
     const [isSavingDistance, setIsSavingDistance] = useState(false);
     const [infoModalVisible, setInfoModalVisible] = useState(false);
-
-    type UserProfile = {
-        fullName?: string;
-        email?: string;
-    };
 
     useEffect(() => {
         let isMounted = true;
 
         async function loadSettingsData() {
             try {
-                setIsLoadingProfile(true);
                 setIsLoadingDistance(true);
                 setDistanceError("");
 
-                let hasSession = false;
-
-                try {
-                    const session = await fetchAuthSession();
-                    hasSession = !!session.tokens?.accessToken;
-                } catch {
-                    hasSession = false;
-                }
-
-                if (!hasSession) {
-                    return;
-                }
-
-                const [profileResult, lifestyleResult] =
-                    await Promise.allSettled([
-                        getCurrentUserProfile(),
-                        getLifestyleProfile(),
-                    ]);
+                const lifestyleProfile = await getLifestyleProfile();
 
                 if (!isMounted) return;
 
-                if (profileResult.status === "fulfilled") {
-                    setUserProfile(profileResult.value);
-                } else {
-                    console.log(
-                        "Could not load current user profile:",
-                        profileResult.reason
-                    );
+                if (typeof lifestyleProfile.searchDistance === "number") {
+                    setDistance(lifestyleProfile.searchDistance);
                 }
+            } catch (error) {
+                console.log("Could not load lifestyle profile:", error);
 
-                if (lifestyleResult.status === "fulfilled") {
-                    const savedDistance =
-                        lifestyleResult.value.searchDistance;
-
-                    if (typeof savedDistance === "number") {
-                        setDistance(savedDistance);
-                    }
-                } else {
-                    console.log(
-                        "Could not load lifestyle profile:",
-                        lifestyleResult.reason
-                    );
-
+                if (isMounted) {
                     setDistanceError(
                         "Unable to load your saved search distance."
                     );
                 }
             } finally {
                 if (isMounted) {
-                    setIsLoadingProfile(false);
                     setIsLoadingDistance(false);
                 }
             }
@@ -140,9 +100,9 @@ export default function Settings() {
         }
     }
 
-    async function handleDistanceChange(value: number) {
-        setDistance(value)
-        setSuccessMessage("Save Settings")
+    function handleDistanceChange(value: number) {
+        setDistance(value);
+        setSuccessMessage("Save Settings");
     }
 
     return (
@@ -232,9 +192,7 @@ export default function Settings() {
                             ) : (
                                 <DistanceSlider
                                     value={distance}
-                                    onChange={((value) =>
-                                        handleDistanceChange(value)
-                                    )}
+                                    onChange={handleDistanceChange}
                                     min={5}
                                     max={100}
                                     step={1}
