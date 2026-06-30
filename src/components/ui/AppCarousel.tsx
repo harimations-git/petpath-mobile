@@ -38,9 +38,9 @@ export default function AppCarousel({
     items
 }: AppCarouselProps) {
     const [activeIndex, setActiveIndex] = useState(0);
-    const flatListRef = useRef<FlatList<AppCarouselItem>>(null);
+    const flatListRef = useRef<FlatList<AppCarouselItem>>(null); //lets us manually move the carousel
 
-    async function handleOpenLink(url: string) {
+    async function handleOpenLink(url: string) { //runs when the user taps a carousel card
         try {
             const canOpen = await Linking.canOpenURL(url);
 
@@ -53,11 +53,11 @@ export default function AppCarousel({
         }
     }
 
-    function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
-        const offsetX = event.nativeEvent.contentOffset.x;
-        const index = Math.round(offsetX / (CARD_WIDTH + CARD_SPACING));
+    function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) { //runs when carousel  is scrolling
+        const offsetX = event.nativeEvent.contentOffset.x; //this gets how far the user has scrolled horizontally
+        const index = Math.round(offsetX / (CARD_WIDTH + CARD_SPACING)); //this works out which card is active
         setActiveIndex(index)
-    }
+    } 
 
     return (
         <View style={styles.wrapper}>
@@ -71,12 +71,12 @@ export default function AppCarousel({
                 keyExtractor={(item) => item.title}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                snapToInterval={CARD_WIDTH + CARD_SPACING}
+                snapToInterval={CARD_WIDTH + CARD_SPACING} //snap to nearest card
                 decelerationRate={"fast"}
                 bounces={false}
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
-                ItemSeparatorComponent={() => <View style={{ width: CARD_SPACING }} />}
+                ItemSeparatorComponent={() => <View style={{ width: CARD_SPACING }} />} //adds space between each image
                 renderItem={({ item }) => (
                     <TouchableOpacity
                         activeOpacity={0.9}
