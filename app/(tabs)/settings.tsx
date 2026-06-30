@@ -23,9 +23,10 @@ import { useUserProfile } from "../../src/context/UserProfileContext";
 
 export default function Settings() {
 
+    const [originalDistance, setOriginalDistance] = useState(0);
     const [distance, setDistance] = useState(5);
     const [distanceError, setDistanceError] = useState("");
-    const [successMessage, setSuccessMessage] = useState("Save Settings");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const { userProfile, isLoadingProfile } = useUserProfile();
 
@@ -47,6 +48,7 @@ export default function Settings() {
 
                 if (typeof lifestyleProfile.searchDistance === "number") {
                     setDistance(lifestyleProfile.searchDistance);
+                    setOriginalDistance(lifestyleProfile.searchDistance);
                 }
             } catch (error) {
                 console.log("Could not load lifestyle profile:", error);
@@ -59,6 +61,7 @@ export default function Settings() {
             } finally {
                 if (isMounted) {
                     setIsLoadingDistance(false);
+
                 }
             }
         }
@@ -208,24 +211,23 @@ export default function Settings() {
                                 </Text>
                             ) : null}
 
-                            <TouchableOpacity
-                                style={[styles.button, styles.primaryButton]}
-                                activeOpacity={0.85}
-                                onPress={handleSaveDistance}
-                            >
-                                <View style={styles.primaryButtonContent}>
-                                    {isSavingDistance ? (
-                                        <LoadingSpinner size="small" />
-                                    ) : (
-
-                                        <Text style={styles.primaryButtonText}>
-                                            {successMessage}
-                                        </Text>
-
-                                    )}
-                                </View>
-
-                            </TouchableOpacity>
+                            {successMessage !== "" && (
+                                <TouchableOpacity
+                                    style={[styles.button, styles.primaryButton]}
+                                    activeOpacity={0.85}
+                                    onPress={handleSaveDistance}
+                                >
+                                    <View style={styles.primaryButtonContent}>
+                                        {isSavingDistance ? (
+                                            <LoadingSpinner size="small" />
+                                        ) : (
+                                            <Text style={styles.primaryButtonText}>
+                                                {successMessage}
+                                            </Text>
+                                        )}
+                                    </View>
+                                </TouchableOpacity>
+                            )}
                         </View>
 
                         <View style={styles.sectionGap}>

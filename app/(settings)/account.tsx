@@ -21,6 +21,7 @@ import Spacer from "../../src/components/layout/Spacer";
 import { Ionicons } from "@expo/vector-icons";
 import BackButton from "../../src/components/ui/BackButton";
 import InfoModal from "../../src/components/ui/infoModal";
+import LoadingSpinner from "../../src/components/ui/LoadingSpinner";
 
 export default function AccountSettings() {
 
@@ -196,136 +197,144 @@ export default function AccountSettings() {
                 />
 
                 <View style={styles.cardWrapper}>
-                    <Card>
+                    {isLoadingNotifications || isLoadingProfile ? (
+                        <>
+                            <Spacer height={240} />
+                            <LoadingSpinner size="large" />
+                        </>
+                    ) : (
+                        <>
+                            <Card>
+                                <View style={styles.heroText}>
+                                    <Text style={styles.title}>Account settings:</Text>
+                                    <Text style={styles.subtitle}>
+                                        Manage your account details.
+                                    </Text>
+                                </View>
+                                <Spacer height={20} />
+                                <View style={styles.accountHeaderBox}>
+                                    <View style={styles.accountIcon}>
+                                        <Ionicons
+                                            name="person-outline"
+                                            size={26}
+                                            color={theme.colors.primaryDark}
+                                        />
+                                    </View>
 
-                        <View style={styles.heroText}>
-                            <Text style={styles.title}>Account settings:</Text>
-                            <Text style={styles.subtitle}>
-                                Manage your account details.
-                            </Text>
-                        </View>
-                        <Spacer height={20} />
-                        <View style={styles.accountHeaderBox}>
-                            <View style={styles.accountIcon}>
-                                <Ionicons
-                                    name="person-outline"
-                                    size={26}
-                                    color={theme.colors.primaryDark}
-                                />
-                            </View>
+                                    <View style={styles.accountText}>
+                                        <Text style={styles.accountLabel}>Email address</Text>
+                                        <Text style={styles.accountEmail}>
+                                            {userProfile?.email || "No email found"}
+                                        </Text>
+                                    </View>
+                                </View>
 
-                            <View style={styles.accountText}>
-                                <Text style={styles.accountLabel}>Email address</Text>
-                                <Text style={styles.accountEmail}>
-                                    {userProfile?.email || "No email found"}
-                                </Text>
-                            </View>
-                        </View>
+                                <View style={styles.sectionGap}>
+                                    <Text style={styles.sectionTitle}>Security</Text>
+                                </View>
 
-                        <View style={styles.sectionGap}>
-                            <Text style={styles.sectionTitle}>Security</Text>
-                        </View>
-
-                        <TouchableOpacity
-                            style={styles.settingsRow}
-                            activeOpacity={0.85}
-                            onPress={() => {
-                                router.push({
-                                    pathname: routes.settings.resetPassword,
-                                    params: {
-                                        email: userProfile?.email || "",
-                                    },
-                                });
-                            }}
-                        >
-                            <Ionicons
-                                name="key-outline"
-                                size={22}
-                                color={theme.colors.primaryDark}
-                            />
-
-                            <View style={styles.rowText}>
-                                <Text style={styles.rowTitle}>Reset password</Text>
-                                <Text style={styles.rowDescription}>
-                                    Send a password reset link to your email.
-                                </Text>
-                            </View>
-
-                            <Ionicons
-                                name="chevron-forward"
-                                size={20}
-                                color={theme.colors.primaryDark}
-                            />
-                        </TouchableOpacity>
-
-                        < View style={styles.sectionGap}>
-                            <Text style={styles.sectionTitle}>Email preferences</Text>
-                        </View>
-
-                        <TouchableOpacity
-                            style={styles.checkboxRow}
-                            activeOpacity={0.85}
-                            disabled={isLoadingNotifications || isSavingNotifications}
-                            onPress={handleEmailUpdatesToggle}
-                        >
-                            <View
-                                style={[
-                                    styles.checkbox,
-                                    emailUpdates && styles.checkboxActive,
-                                ]}
-                            >
-                                {emailUpdates && (
+                                <TouchableOpacity
+                                    style={styles.settingsRow}
+                                    activeOpacity={0.85}
+                                    onPress={() => {
+                                        router.push({
+                                            pathname: routes.settings.resetPassword,
+                                            params: {
+                                                email: userProfile?.email || "",
+                                            },
+                                        });
+                                    }}
+                                >
                                     <Ionicons
-                                        name="checkmark"
-                                        size={16}
-                                        color="#FFFFFF"
+                                        name="key-outline"
+                                        size={22}
+                                        color={theme.colors.primaryDark}
                                     />
-                                )}
-                            </View>
 
-                            <View style={styles.rowText}>
-                                <Text style={styles.rowTitle}>
-                                    Receive pet updates
-                                </Text>
-                                <Text style={styles.rowDescription}>
-                                    Receive emails when pets you are interested in are reserved.
-                                </Text>
+                                    <View style={styles.rowText}>
+                                        <Text style={styles.rowTitle}>Reset password</Text>
+                                        <Text style={styles.rowDescription}>
+                                            Send a password reset link to your email.
+                                        </Text>
+                                    </View>
 
-                                {notificationError ? (
-                                    <Text style={styles.formError}>{notificationError}</Text>
-                                ) : null}
+                                    <Ionicons
+                                        name="chevron-forward"
+                                        size={20}
+                                        color={theme.colors.primaryDark}
+                                    />
+                                </TouchableOpacity>
 
-                            </View>
-                        </TouchableOpacity>
+                                < View style={styles.sectionGap}>
+                                    <Text style={styles.sectionTitle}>Email preferences</Text>
+                                </View>
 
-                        <View style={styles.sectionGap}>
-                            <Text style={styles.sectionTitle}>Account removal</Text>
-                        </View>
+                                <TouchableOpacity
+                                    style={styles.checkboxRow}
+                                    activeOpacity={0.85}
+                                    disabled={isLoadingNotifications || isSavingNotifications}
+                                    onPress={handleEmailUpdatesToggle}
+                                >
+                                    <View
+                                        style={[
+                                            styles.checkbox,
+                                            emailUpdates && styles.checkboxActive,
+                                        ]}
+                                    >
+                                        {emailUpdates && (
+                                            <Ionicons
+                                                name="checkmark"
+                                                size={16}
+                                                color="#FFFFFF"
+                                            />
+                                        )}
+                                    </View>
 
-                        <View style={styles.dangerBox}>
-                            <View style={styles.dangerTextWrapper}>
-                                <Text style={styles.dangerTitle}>
-                                    Delete account
-                                </Text>
-                                <Text style={styles.dangerDescription}>
-                                    Permanently remove your account and saved PetPath data.
-                                </Text>
-                            </View>
+                                    <View style={styles.rowText}>
+                                        <Text style={styles.rowTitle}>
+                                            Receive pet updates
+                                        </Text>
+                                        <Text style={styles.rowDescription}>
+                                            Receive emails when pets you are interested in are reserved.
+                                        </Text>
 
-                            <TouchableOpacity
-                                style={styles.deleteButton}
-                                activeOpacity={0.85}
-                                onPress={() => {
-                                    setInfoModalVisible(true)
-                                }}
-                            >
-                                <Text style={styles.deleteButtonText}>
-                                    Delete account
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    </Card>
-                </View>
+                                        {notificationError ? (
+                                            <Text style={styles.formError}>{notificationError}</Text>
+                                        ) : null}
+
+                                    </View>
+                                </TouchableOpacity>
+
+                                <View style={styles.sectionGap}>
+                                    <Text style={styles.sectionTitle}>Account removal</Text>
+                                </View>
+
+                                <View style={styles.dangerBox}>
+                                    <View style={styles.dangerTextWrapper}>
+                                        <Text style={styles.dangerTitle}>
+                                            Delete account
+                                        </Text>
+                                        <Text style={styles.dangerDescription}>
+                                            Permanently remove your account and saved PetPath data.
+                                        </Text>
+                                    </View>
+
+                                    <TouchableOpacity
+                                        style={styles.deleteButton}
+                                        activeOpacity={0.85}
+                                        onPress={() => {
+                                            setInfoModalVisible(true)
+                                        }}
+                                    >
+                                        <Text style={styles.deleteButtonText}>
+                                            Delete account
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </Card>
+                        </>
+                    )}
+                </View >
             </View >
             <InfoModal
                 visible={infoModalVisible}
