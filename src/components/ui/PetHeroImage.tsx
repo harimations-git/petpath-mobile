@@ -1,5 +1,5 @@
-import React from "react";
-import { Image, ImageStyle, StyleProp, StyleSheet, ViewStyle } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, Easing, Image, ImageStyle, StyleProp, StyleSheet, useWindowDimensions, ViewStyle } from "react-native";
 
 type PetHeroImageProps = {
     width?: number;
@@ -14,6 +14,8 @@ type PetHeroImageProps = {
     opacity?: number;
     zIndex?: number;
     style?: StyleProp<ImageStyle>;
+    animate?: boolean;
+    slideFromRight?: number,
 };
 
 export default function PetHeroImage({
@@ -27,9 +29,37 @@ export default function PetHeroImage({
     opacity = 1,
     zIndex = 1,
     style,
+    animate = true,
+    slideFromRight = 90,
 }: PetHeroImageProps) {
+
+    const fadeAnimation = useRef(new Animated.Value(0)).current;
+
+    const slideAnimation = useRef(
+        new Animated.Value(slideFromRight)
+    ).current;
+
+    useEffect(() => {
+        if (!animate) return;
+
+        Animated.parallel([
+            Animated.timing(fadeAnimation, {
+                toValue: opacity,
+                duration: 1000,
+                easing: Easing.out(Easing.ease),
+                useNativeDriver: true
+            }),
+
+            Animated.timing(slideAnimation, {
+                toValue: 0,
+                duration: 600,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: true
+            }),
+        ]).start();
+    }, [animate, fadeAnimation, opacity, slideAnimation]);
     return (
-        <Image
+        <Animated.Image
             source={require("../../../assets/images/Logo-Animals.png")}
             resizeMode="contain"
             style={[
@@ -39,9 +69,10 @@ export default function PetHeroImage({
                     height,
                     top,
                     right,
-                    opacity,
+                    opacity: fadeAnimation,
                     zIndex,
                     transform: [
+                        { translateX: slideAnimation },
                         { rotate: `${rotate}deg` },
                         { scaleX: flipX ? -1 : 1 },
                         { scaleY: flipY ? -1 : 1 },
