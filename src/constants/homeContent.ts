@@ -55,20 +55,52 @@ export const homeCarouselItems: AppCarouselItem[] = [
         tag: "Insurance",
     },
     {
+        title: "Dogs R Us",
+        description:
+            "Dogs have complex needs, take a look and learn more about caring for a dog. ",
+        image: require("../../assets/images/resources/pet-dog-info.jpg"),
+        url: "https://www.rspca.org.uk/adviceandwelfare/pets/dogs",
+        tag: "Dogs",
+    },
+    {
+        title: "Cat & Kitten tabloid",
+        description:
+            "Get expert advice on how to keep your kitten or cat happy and healthy. ",
+        image: require("../../assets/images/resources/pet-cat-info.jpg"),
+        url: "https://www.rspca.org.uk/adviceandwelfare/pets/cats",
+        tag: "Cats",
+    },
+    {
+        title: "Guinea pig dictionary",
+        description:
+            "Get useful information on understanding a guinea pig's needs. ",
+        image: require("../../assets/images/resources/guinea-pig.jpeg"),
+        url: "https://www.rspca.org.uk/adviceandwelfare/pets/rodents/guineapigs",
+        tag: "Pigs",
+    },
+    {
+        title: "Rabbit care package ",
+        description:
+            "Learn all about pet rabbits and their habits from the RSPCA. ",
+        image: require("../../assets/images/resources/pet-rabbits.jpg"),
+        url: "https://www.rspca.org.uk/adviceandwelfare/pets/rabbits",
+        tag: "Rabbits",
+    },
+    {
+        title: "Keeping rodents",
+        description:
+            "Rodents have very different needs. Learn all about them right here.",
+        image: require("../../assets/images/resources/pet-rodent-info.jpg"),
+        url: "https://www.rspca.org.uk/adviceandwelfare/pets/rodents",
+        tag: "Rodent care",
+    },
+    {
         title: "Training and behaviour",
         description:
             "Find useful guidance on behaviour, enrichment and positive reinforcement.",
         image: require("../../assets/images/resources/pet-training.jpg"),
         url: "https://online-learning-college.com/knowledge-hub/animal-care/understanding-animal-training-positive-reinforcement-techniques/",
         tag: "Advice",
-    },
-    {
-        title: "Guinea pig dictionary",
-        description:
-            "Get useful information on understanding guinea pig's needs. ",
-        image: require("../../assets/images/resources/guinea-pig.jpeg"),
-        url: "https://www.dogstrust.org.uk/dog-advice/understanding-your-dog/finding-behaviour-and-training-support",
-        tag: "Pigs",
     },
     {
         title: "Behaviourist or trainer?",

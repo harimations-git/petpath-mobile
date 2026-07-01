@@ -2,6 +2,7 @@ import { Modal, View, Text, StyleSheet, ViewStyle, StyleProp, TouchableOpacity }
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../constants/theme";
 import Spacer from "../layout/Spacer";
+import PillDropdown from "./PillDropdown";
 
 type InfoModalProps = {
     visible: boolean;
@@ -26,7 +27,8 @@ export default function InfoModal({
     iconName = "information-circle-outline",
     onConfirm,
     onClose,
-    primaryButtonStyle
+    primaryButtonStyle,
+
 }: InfoModalProps) {
     return (
         <Modal

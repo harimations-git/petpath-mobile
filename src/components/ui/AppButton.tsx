@@ -1,6 +1,8 @@
 import React from "react";
 import {
     StyleSheet,
+    StyleProp,
+    TextStyle,
     Text,
     TouchableOpacity,
     TouchableOpacityProps,
@@ -11,27 +13,36 @@ import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../constants/theme";
 
 type AppButtonProps = TouchableOpacityProps & {
-    title: string;
+    title?: string;
     width?: ViewStyle["width"];
+    style?: StyleProp<ViewStyle>;
+    textStyle?: StyleProp<TextStyle>;
+    arrowIconSet?: boolean
+    iconSize?: number;
+    iconName?: keyof typeof Ionicons.glyphMap;
+    iconColor?: string;
 };
 
 export default function AppButtonProps({ title, width = "100%",
-    style, ...props }: AppButtonProps) {
+    style, textStyle, arrowIconSet=true, iconSize = 28, iconName="paw", iconColor="#ffff", ...props }: AppButtonProps) {
     return (
         <TouchableOpacity
             activeOpacity={0.85}
             style={[styles.button, { width }, style]}
             {...props}
         >
-            <View style={styles.iconSpace}>
-                <Ionicons name="paw" size={28} color="#ffffff" />
+            <View style={styles.iconSpace} {...props}>
+                <Ionicons name={iconName} size={iconSize} color={iconColor}/>
             </View>
 
-            <Text style={styles.text}>{title}</Text>
+            <Text style={[styles.text, textStyle]}>{title}</Text>
 
-            <Ionicons name="arrow-forward" size={20} color="#ffffff" />
+            {arrowIconSet && (
+                <Ionicons name="arrow-forward" size={20} color={iconColor}/>
+            )}
+
         </TouchableOpacity>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
